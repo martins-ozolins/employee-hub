@@ -18,7 +18,6 @@ public class AppSecurityConfig {
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) {
 
-
         http.sessionManagement(sessionManagementConfigurer ->
                 sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -27,7 +26,6 @@ public class AppSecurityConfig {
         http.httpBasic(hbc -> hbc.disable());
 
         http.csrf(csrf -> csrf.disable());
-
 
         http.authorizeHttpRequests(req -> req
                 .requestMatchers("/auth/**").permitAll()
