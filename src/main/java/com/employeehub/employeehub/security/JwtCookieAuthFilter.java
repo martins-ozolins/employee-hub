@@ -29,7 +29,7 @@ public class JwtCookieAuthFilter extends OncePerRequestFilter {
     public JwtCookieAuthFilter(
             JwtService jwtService,
             UserDetailsService userDetailsService,
-            @Value("${app.jwt.cookieName:access_token}") String cookieName
+            @Value("${app.jwt.accessCookieName}") String cookieName
     ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;

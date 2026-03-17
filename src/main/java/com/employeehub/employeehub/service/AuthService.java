@@ -11,6 +11,7 @@ import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
 @Service
@@ -42,6 +43,7 @@ public class AuthService {
         u.setLastName(dto.lastName());
         u.setPasswordHash(passwordEncoder.encode(dto.password()));
         u.setRole(PlatformRole.USER);
+        u.setIsActive(true);
 
         userRepository.save(u);
     }
@@ -64,6 +66,51 @@ public class AuthService {
         refreshTokenRepository.save(entity);
 
         return new TokenPair(accessToken, refreshTokenResult.token());
+    }
+
+    public void logout(String token) {
+        try {
+            JwtClaims claims = jwtService.validateJwtAndGetClaims(token);
+            refreshTokenRepository.findByJti(claims.jti()).ifPresent(t -> {
+                t.setRevoked(true);
+                refreshTokenRepository.save(t);
+            });
+        } catch (Exception ignored) {
+            // token invalid or already expired — nothing to revoke
+        }
+    }
+
+    public TokenPair refresh(String token) {
+        JwtClaims claims;
+        try {
+            claims = jwtService.validateJwtAndGetClaims(token);
+        } catch (Exception e) {
+            throw new InvalidCredentialsException();
+        }
+
+        RefreshToken refreshToken = refreshTokenRepository.findByJti(claims.jti())
+                .orElseThrow(InvalidCredentialsException::new);
+
+        if (refreshToken.getRevoked()) {
+            throw new InvalidCredentialsException();
+        }
+
+        // rotate: revoke old token
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        // issue new token pair
+        User owner = refreshToken.getOwner();
+        String newAccessToken = jwtService.generateAccessToken(owner.getEmail(), owner.getId());
+        RefreshTokenResult newRefreshResult = jwtService.generateRefreshToken(owner.getEmail(), owner.getId());
+
+        RefreshToken newEntity = new RefreshToken();
+        newEntity.setJti(newRefreshResult.jti());
+        newEntity.setOwner(owner);
+        newEntity.setExpiresAt(newRefreshResult.expiresAt());
+        refreshTokenRepository.save(newEntity);
+
+        return new TokenPair(newAccessToken, newRefreshResult.token());
     }
 
 

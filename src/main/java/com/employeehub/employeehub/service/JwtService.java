@@ -3,6 +3,7 @@ package com.employeehub.employeehub.service;
 
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,7 +70,7 @@ public class JwtService {
         return new RefreshTokenResult(token, jti, exp);
     }
 
-    public JwtClaims validateJwtAndGetClaims(String jwt) {
+    public JwtClaims validateJwtAndGetClaims(String jwt) throws JwtException {
         Claims payload = Jwts.parser()
                 .verifyWith(key)
                 .build()
