@@ -1,6 +1,8 @@
 package com.employeehub.employeehub.service;
 
 
+import com.employeehub.employeehub.dto.AuthDtos.*;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +50,37 @@ public class JwtService {
                 .compact();
     }
 
+    /** Create a long-lived refresh token */
+    public RefreshTokenResult generateRefreshToken(String email, UUID userId) {
+        UUID jti = UUID.randomUUID();
+        Instant now = Instant.now();
+        Instant exp = now.plusSeconds(refreshSeconds);
 
+        String token = Jwts.builder()
+                .issuer(issuer)
+                .subject(email)
+                .claim("userId", userId.toString())
+                .claim("jti", jti.toString())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(exp))
+                .signWith(key)
+                .compact();
 
+        return new RefreshTokenResult(token, jti, exp);
+    }
+
+    public JwtClaims validateJwtAndGetClaims(String jwt) {
+        Claims payload = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(jwt)
+                .getPayload();
+
+        String email = payload.getSubject();
+        UUID userId = UUID.fromString(payload.get("userId", String.class));
+        UUID jti = UUID.fromString(payload.get("jti", String.class));
+
+        return new JwtClaims(email, userId, jti);
+    }
 
 }

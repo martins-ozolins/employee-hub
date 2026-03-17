@@ -41,7 +41,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private PlatformRole role;
 
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
