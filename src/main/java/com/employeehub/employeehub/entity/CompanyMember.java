@@ -28,11 +28,13 @@ public class CompanyMember {
     @GeneratedValue
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "company_id", nullable = false)
-    private UUID companyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

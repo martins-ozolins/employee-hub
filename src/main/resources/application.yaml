@@ -9,4 +9,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    accessSeconds: ${ACCESS_TOKEN_SECONDS}
+    refreshSeconds: ${REFRESH_TOKEN_SECONDS}
+    issuer: ${TOKEN_ISSUER}
+    accessCookieName: access_token
+    refreshCookieName: refresh_token
 

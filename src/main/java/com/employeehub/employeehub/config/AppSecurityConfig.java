@@ -1,6 +1,7 @@
 package com.employeehub.employeehub.config;
 
 
+import com.employeehub.employeehub.security.JwtCookieAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -9,15 +10,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
 public class AppSecurityConfig {
 
+    private final JwtCookieAuthFilter jwtCookieAuthFilter;
+
+    public AppSecurityConfig(JwtCookieAuthFilter jwtCookieAuthFilter) {
+        this.jwtCookieAuthFilter = jwtCookieAuthFilter;
+    }
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) {
-
 
         http.sessionManagement(sessionManagementConfigurer ->
                 sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -28,7 +34,6 @@ public class AppSecurityConfig {
 
         http.csrf(csrf -> csrf.disable());
 
-
         http.authorizeHttpRequests(req -> req
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
@@ -37,7 +42,7 @@ public class AppSecurityConfig {
                 .anyRequest().authenticated()
         );
 
-
+        http.addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
 
