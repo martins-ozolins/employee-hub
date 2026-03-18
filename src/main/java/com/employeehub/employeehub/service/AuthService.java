@@ -52,6 +52,8 @@ public class AuthService {
         User user = userRepository.findByEmail(dto.email())
                 .orElseThrow(InvalidCredentialsException::new);
 
+        if (!user.getIsActive()) throw new InvalidCredentialsException();
+
         if (!passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
