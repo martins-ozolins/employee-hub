@@ -10,6 +10,8 @@ import com.employeehub.employeehub.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class CompanyService {
 
@@ -61,6 +63,20 @@ public class CompanyService {
                 company.getDescription(),
                 company.getCreatedAt()
         );
+    }
+
+    public List<CompanyResponseDto> getUserCompanies(AppUserDetails principal) {
+        return companyMemberRepository.findCompaniesByUserId(principal.getId())
+                .stream()
+                .map(company -> new CompanyResponseDto(
+                        company.getId(),
+                        company.getName(),
+                        company.getIndustry(),
+                        company.getLocation(),
+                        company.getDescription(),
+                        company.getCreatedAt()
+                ))
+                .toList();
     }
 }
 

@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -49,5 +51,7 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<CompanyMember> companyMembers = new ArrayList<>();
 
 }

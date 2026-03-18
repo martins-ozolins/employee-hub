@@ -1,7 +1,7 @@
 package com.employeehub.employeehub.controller;
 
 
-import com.employeehub.employeehub.dto.ApiResponse;
+import com.employeehub.employeehub.dto.ApiResponses.*;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.service.AuthService;
 import com.employeehub.employeehub.util.CookieUtils;
@@ -34,56 +34,39 @@ public class AuthController {
         this.refreshCookieName = refreshCookieName;
     }
 
-
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@Valid @RequestBody UserRegisterDto dto) {
-
+    public ResponseEntity<MessageResponse> register(@Valid @RequestBody UserRegisterDto dto) {
         authService.register(dto);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("User registered", null));
-
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("User registered"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse> login(
+    public ResponseEntity<MessageResponse> login(
             @Valid @RequestBody LoginDto dto,
             HttpServletResponse response
     ) {
         TokenPair tokenPair = authService.login(dto);
         CookieUtils.addCookie(response, accessCookieName, tokenPair.accessToken());
         CookieUtils.addCookie(response, refreshCookieName, tokenPair.refreshToken());
-
-        return ResponseEntity.ok(new ApiResponse("Signed in successfully"));
+        return ResponseEntity.ok(new MessageResponse("Signed in successfully"));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logout(HttpServletRequest request, HttpServletResponse response) {
-
+    public ResponseEntity<MessageResponse> logout(HttpServletRequest request, HttpServletResponse response) {
         String token = CookieUtils.getCookieValue(request, refreshCookieName);
-
         authService.logout(token);
-
-        response.addHeader(
-                "Set-Cookie",
-                accessCookieName + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"
-        );
-        response.addHeader(
-                "Set-Cookie",
-                refreshCookieName + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"
-        );
-        return ResponseEntity.ok(new ApiResponse("Logged out successfully"));
+        response.addHeader("Set-Cookie", accessCookieName + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+        response.addHeader("Set-Cookie", refreshCookieName + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+        return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<MessageResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
         String token = CookieUtils.getCookieValue(request, refreshCookieName);
-
         TokenPair tokenPair = authService.refresh(token);
-
         CookieUtils.addCookie(response, accessCookieName, tokenPair.accessToken());
         CookieUtils.addCookie(response, refreshCookieName, tokenPair.refreshToken());
-
-        return ResponseEntity.ok(new ApiResponse("Token refreshed"));
+        return ResponseEntity.ok(new MessageResponse("Token refreshed"));
     }
 
 }
