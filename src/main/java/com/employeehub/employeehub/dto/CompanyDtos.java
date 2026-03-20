@@ -1,15 +1,17 @@
 package com.employeehub.employeehub.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.Instant;
 import java.util.UUID;
 
 public class CompanyDtos {
 
     public record CreateCompanyDto(
-            String name,
-            String industry,
-            String location,
-            String description
+            @NotBlank String name,
+            @NotBlank String industry,
+            @NotBlank String location,
+            @NotBlank String description
     ) {}
 
     public record CompanyResponseDto(
@@ -19,6 +21,13 @@ public class CompanyDtos {
             String location,
             String description,
             Instant createdAt
+    ) {}
+
+    public record UpdateCompanyDto(
+            @NotBlank String name,
+            @NotBlank String industry,
+            @NotBlank String location,
+            @NotBlank String description
     ) {}
 
 }

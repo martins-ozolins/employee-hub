@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/companies")
@@ -44,7 +45,24 @@ public class CompanyController {
 
 
     // UPDATE COMPANY
+    @PutMapping("/{id}")
+    public ResponseEntity<MessageAndDataResponse<CompanyResponseDto>> update(
+            @AuthenticationPrincipal AppUserDetails principal,
+            @RequestBody UpdateCompanyDto dto,
+            @PathVariable UUID id
+    ) {
+        CompanyResponseDto company = companyService.update(principal, dto, id);
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageAndDataResponse<>("Company updated", company));
+    }
 
     // DELETE COMPANY
+    @DeleteMapping("/{id}")
+    public ResponseEntity<MessageResponse> delete(
+            @AuthenticationPrincipal AppUserDetails principal,
+            @PathVariable UUID id
+    ) {
+        companyService.delete(principal, id);
+        return ResponseEntity.ok(new MessageResponse("Company deleted successfully"));
+    }
 
 }

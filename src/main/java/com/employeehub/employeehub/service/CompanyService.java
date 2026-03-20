@@ -3,6 +3,7 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.CompanyDtos.*;
 import com.employeehub.employeehub.entity.*;
+import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.CompanyRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CompanyService {
@@ -41,7 +43,7 @@ public class CompanyService {
                 .description(dto.description())
                 .build();
 
-        company = companyRepository.save(company);
+        company = companyRepository.saveAndFlush(company);
 
         CompanyMember owner = CompanyMember.builder()
                 .user(user)
@@ -77,6 +79,53 @@ public class CompanyService {
                         company.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    public CompanyResponseDto update(AppUserDetails principal, UpdateCompanyDto dto, UUID companyId) {
+
+        // check if user is part of the company and if has right roles
+        CompanyMember member = companyMemberRepository
+                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        Company company = member.getCompany();
+        company.setName(dto.name());
+        company.setIndustry(dto.industry());
+        company.setLocation(dto.location());
+        company.setDescription(dto.description());
+
+        company = companyRepository.saveAndFlush(company);
+
+        return new CompanyResponseDto(
+                company.getId(),
+                company.getName(),
+                company.getIndustry(),
+                company.getLocation(),
+                company.getDescription(),
+                company.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public void delete(AppUserDetails principal, UUID companyId) {
+
+        // check if user is part of the company and if has right roles
+        CompanyMember member = companyMemberRepository
+                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        Company company = member.getCompany();
+
+        companyRepository.delete(company);
+
     }
 }
 
