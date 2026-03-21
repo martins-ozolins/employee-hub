@@ -47,4 +47,16 @@ public class CompanyMemberController {
        return ResponseEntity.status(HttpStatus.CREATED).body(new DataResponse<>(memberResponseDto));
     }
 
+    @PutMapping("/{memberId}")
+    public ResponseEntity<DataResponse<MemberResponseDto>> update(
+            @PathVariable UUID id,
+            @PathVariable UUID memberId,
+            @AuthenticationPrincipal AppUserDetails principal,
+            @Valid @RequestBody UpdateMemberDto dto
+    ) {
+        MemberResponseDto memberResponseDto = companyMemberService.update(id, memberId, principal, dto);
+
+        return ResponseEntity.ok(new DataResponse<>(memberResponseDto));
+    }
+
 }

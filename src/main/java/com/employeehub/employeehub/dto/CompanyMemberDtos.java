@@ -41,6 +41,7 @@ public class CompanyMemberDtos {
             @NotBlank @Size(max = 100) String firstName,
             @NotBlank @Size(max = 100) String lastName,
             @Size(max = 100) String middleName,
+            @NotBlank @Email @Size(max = 255) String personalEmail,
             @NotNull CompanyRole role,
             @NotNull MembershipStatus membershipStatus,
             @NotNull EmploymentStatus employmentStatus,

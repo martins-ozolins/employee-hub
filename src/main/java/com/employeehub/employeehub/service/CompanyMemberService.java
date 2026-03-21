@@ -5,6 +5,7 @@ import com.employeehub.employeehub.dto.CompanyMemberDtos.*;
 import com.employeehub.employeehub.entity.*;
 import com.employeehub.employeehub.exception.ConflictException;
 import com.employeehub.employeehub.exception.ForbiddenException;
+import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -134,5 +135,77 @@ public class CompanyMemberService {
                         m.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public MemberResponseDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
+
+        CompanyMember caller = companyMemberRepository
+                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        CompanyMember member = companyMemberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("Member not found"));
+
+        if (!member.getCompany().getId().equals(companyId)) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        // Resync user link if personalEmail changed
+        if (!dto.personalEmail().equals(member.getPersonalEmail())) {
+            User linkedUser = userRepository.findByEmail(dto.personalEmail()).orElse(null);
+            member.setUser(linkedUser);
+            member.setPersonalEmail(dto.personalEmail());
+        }
+
+        member.setFirstName(dto.firstName());
+        member.setLastName(dto.lastName());
+        member.setMiddleName(dto.middleName());
+        member.setRole(dto.role());
+        member.setMembershipStatus(dto.membershipStatus());
+        member.setEmploymentStatus(dto.employmentStatus());
+        member.setSelfServiceEnabled(dto.selfServiceEnabled());
+        member.setJobTitle(dto.jobTitle());
+        member.setDepartment(dto.department());
+        member.setJoinDate(dto.joinDate());
+        member.setWorkEmail(dto.workEmail());
+        member.setPhoneNumber(dto.phoneNumber());
+        member.setDateOfBirth(dto.dateOfBirth());
+        member.setAddress(dto.address());
+        member.setPersonalCode(dto.personalCode());
+        member.setBankAccount(dto.bankAccount());
+        member.setEmergencyContactName(dto.emergencyContactName());
+        member.setEmergencyContactPhone(dto.emergencyContactPhone());
+
+        CompanyMember saved = companyMemberRepository.saveAndFlush(member);
+
+        return new MemberResponseDto(
+                saved.getId(),
+                saved.getUser() != null ? saved.getUser().getId() : null,
+                saved.getFirstName(),
+                saved.getLastName(),
+                saved.getMiddleName(),
+                saved.getRole(),
+                saved.getMembershipStatus(),
+                saved.getEmploymentStatus(),
+                saved.getSelfServiceEnabled(),
+                saved.getJobTitle(),
+                saved.getDepartment(),
+                saved.getJoinDate(),
+                saved.getWorkEmail(),
+                saved.getPersonalEmail(),
+                saved.getPhoneNumber(),
+                saved.getDateOfBirth(),
+                saved.getAddress(),
+                saved.getPersonalCode(),
+                saved.getBankAccount(),
+                saved.getEmergencyContactName(),
+                saved.getEmergencyContactPhone(),
+                saved.getCreatedAt()
+        );
     }
 }
