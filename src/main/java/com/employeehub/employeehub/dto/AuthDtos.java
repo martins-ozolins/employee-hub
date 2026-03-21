@@ -12,6 +12,7 @@ public class AuthDtos {
             @Email @NotBlank String email,
             @NotBlank String firstName,
             @NotBlank String lastName,
+            String middleName,
             @NotBlank String password
     ) {}
 

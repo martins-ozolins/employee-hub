@@ -48,6 +48,7 @@ public class AuthService {
         u.setEmail(dto.email());
         u.setFirstName(dto.firstName());
         u.setLastName(dto.lastName());
+        u.setMiddleName(dto.middleName());
         u.setPasswordHash(passwordEncoder.encode(dto.password()));
         u.setRole(PlatformRole.USER);
         u.setIsActive(true);

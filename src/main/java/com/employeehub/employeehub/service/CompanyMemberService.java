@@ -10,6 +10,7 @@ import com.employeehub.employeehub.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -94,5 +95,44 @@ public class CompanyMemberService {
                 saved.getEmergencyContactPhone(),
                 saved.getCreatedAt()
         );
+    }
+
+    public List<MemberResponseDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal) {
+
+        CompanyMember caller = companyMemberRepository
+                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        return companyMemberRepository.findByCompanyId(companyId)
+                .stream()
+                .map(m -> new MemberResponseDto(
+                        m.getId(),
+                        m.getUser() != null ? m.getUser().getId() : null,
+                        m.getFirstName(),
+                        m.getLastName(),
+                        m.getMiddleName(),
+                        m.getRole(),
+                        m.getMembershipStatus(),
+                        m.getEmploymentStatus(),
+                        m.getSelfServiceEnabled(),
+                        m.getJobTitle(),
+                        m.getDepartment(),
+                        m.getJoinDate(),
+                        m.getWorkEmail(),
+                        m.getPersonalEmail(),
+                        m.getPhoneNumber(),
+                        m.getDateOfBirth(),
+                        m.getAddress(),
+                        m.getPersonalCode(),
+                        m.getBankAccount(),
+                        m.getEmergencyContactName(),
+                        m.getEmergencyContactPhone(),
+                        m.getCreatedAt()
+                ))
+                .toList();
     }
 }

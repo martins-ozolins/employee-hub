@@ -25,4 +25,7 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, UU
     List<CompanyMember> findByPersonalEmailAndUserIsNull(String personalEmail);
 
     boolean existsByPersonalEmailAndCompany(String email, Company company);
+
+    List<CompanyMember> findByCompanyId(UUID companyId);
+
 }

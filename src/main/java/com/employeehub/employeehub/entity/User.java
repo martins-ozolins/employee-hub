@@ -35,6 +35,9 @@ public class User {
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
