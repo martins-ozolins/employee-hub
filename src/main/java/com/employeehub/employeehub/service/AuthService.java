@@ -2,16 +2,20 @@ package com.employeehub.employeehub.service;
 
 
 import com.employeehub.employeehub.dto.AuthDtos.*;
+import com.employeehub.employeehub.entity.CompanyMember;
 import com.employeehub.employeehub.entity.PlatformRole;
 import com.employeehub.employeehub.entity.RefreshToken;
 import com.employeehub.employeehub.entity.User;
 import com.employeehub.employeehub.exception.EmailAlreadyUsedException;
 import com.employeehub.employeehub.exception.InvalidCredentialsException;
+import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,16 +25,19 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final CompanyMemberRepository companyMemberRepository;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.companyMemberRepository = companyMemberRepository;
     }
 
 
+    @Transactional
     public void register(UserRegisterDto dto)  {
 
         if (userRepository.existsByEmail(dto.email())) {
@@ -45,7 +52,13 @@ public class AuthService {
         u.setRole(PlatformRole.USER);
         u.setIsActive(true);
 
-        userRepository.save(u);
+        User savedUser = userRepository.save(u);
+
+        List<CompanyMember> pending = companyMemberRepository.findByPersonalEmailAndUserIsNull(dto.email());
+        for (CompanyMember member : pending) {
+            member.setUser(savedUser);
+            companyMemberRepository.save(member);
+        }
     }
 
     public TokenPair login(LoginDto dto) {

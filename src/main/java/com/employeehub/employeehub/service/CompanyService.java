@@ -52,7 +52,7 @@ public class CompanyService {
                 .membershipStatus(MembershipStatus.ACTIVE)
                 .employmentStatus(EmploymentStatus.ACTIVE)
                 .selfServiceEnabled(true)
-                .workEmail(user.getEmail())
+                .personalEmail(user.getEmail())
                 .build();
 
         companyMemberRepository.save(owner);

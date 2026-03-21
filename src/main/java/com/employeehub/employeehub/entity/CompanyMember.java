@@ -14,7 +14,8 @@ import java.util.UUID;
 @Table(
         name = "company_members",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_user_company", columnNames = {"user_id", "company_id"})
+                @UniqueConstraint(name = "uk_user_company",  columnNames = {"user_id", "company_id"}),
+                @UniqueConstraint(name = "uk_email_company", columnNames = {"personal_email", "company_id"})
         }
 )
 @Getter
@@ -29,13 +30,12 @@ public class CompanyMember {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CompanyRole role;
@@ -51,8 +51,20 @@ public class CompanyMember {
     @Column(nullable = false)
     private EmploymentStatus employmentStatus;
 
-    @Column(name = "work_email", nullable = false)
+    @Column(name = "first_name", nullable = false, length = 100)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 100)
+    private String lastName;
+
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
+    @Column(name = "work_email")
     private String workEmail;
+
+    @Column(name = "personal_email")
+    private String personalEmail;
 
     @Column(name = "phone_number")
     private String phoneNumber;
@@ -66,12 +78,23 @@ public class CompanyMember {
     @Column(name = "join_date")
     private LocalDate joinDate;
 
-    /**
-     * Manager relationship (self-reference)
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id")
-    private CompanyMember manager;
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "address", length = 500)
+    private String address;
+
+    @Column(name = "personal_code", length = 100)
+    private String personalCode;
+
+    @Column(name = "bank_account", length = 100)
+    private String bankAccount;
+
+    @Column(name = "emergency_contact_name", length = 255)
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone", length = 50)
+    private String emergencyContactPhone;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

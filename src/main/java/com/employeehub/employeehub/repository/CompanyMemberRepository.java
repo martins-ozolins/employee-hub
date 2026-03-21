@@ -21,4 +21,8 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, UU
 
     @Query("SELECT cm FROM CompanyMember cm WHERE cm.user.id = :userId AND cm.company.id = :companyId")
     Optional<CompanyMember> findMemberByUserIdAndCompanyId(@Param("userId") UUID userId, @Param("companyId") UUID companyId);
+
+    List<CompanyMember> findByPersonalEmailAndUserIsNull(String personalEmail);
+
+    boolean existsByPersonalEmailAndCompany(String email, Company company);
 }

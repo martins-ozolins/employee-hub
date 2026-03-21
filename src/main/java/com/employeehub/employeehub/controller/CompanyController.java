@@ -43,7 +43,6 @@ public class CompanyController {
         return ResponseEntity.status(HttpStatus.OK).body(new DataResponse<>(companies));
     }
 
-
     // UPDATE COMPANY
     @PutMapping("/{id}")
     public ResponseEntity<MessageAndDataResponse<CompanyResponseDto>> update(
