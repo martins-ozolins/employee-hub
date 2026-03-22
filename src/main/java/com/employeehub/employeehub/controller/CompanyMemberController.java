@@ -1,6 +1,5 @@
 package com.employeehub.employeehub.controller;
 
-
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.ApiResponses.*;
 import com.employeehub.employeehub.dto.CompanyMemberDtos.*;
@@ -25,15 +24,14 @@ public class CompanyMemberController {
         this.companyMemberService = companyMemberService;
     }
 
-
     @GetMapping
-    public ResponseEntity<PagedDataResponse<MemberResponseDto>> getAllCompanyMembers(
+    public ResponseEntity<PagedDataResponse<MemberSummaryDto>> getAllCompanyMembers(
             @PathVariable UUID id,
             @AuthenticationPrincipal AppUserDetails principal,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
-        Page<MemberResponseDto> page = companyMemberService.getAllCompanyMembers(id, principal, search, pageable);
+        Page<MemberSummaryDto> page = companyMemberService.getAllCompanyMembers(id, principal, search, pageable);
 
         return ResponseEntity.ok(new PagedDataResponse<>(
                 page.getContent(),
@@ -48,28 +46,35 @@ public class CompanyMemberController {
         ));
     }
 
+    @GetMapping("/{memberId}")
+    public ResponseEntity<DataResponse<MemberDetailDto>> getById(
+            @PathVariable UUID id,
+            @PathVariable UUID memberId,
+            @AuthenticationPrincipal AppUserDetails principal
+    ) {
+        MemberDetailDto dto = companyMemberService.getById(id, memberId, principal);
+        return ResponseEntity.ok(new DataResponse<>(dto));
+    }
 
     @PostMapping
-    public ResponseEntity<DataResponse<MemberResponseDto>> create(
+    public ResponseEntity<DataResponse<MemberDetailDto>> create(
             @PathVariable UUID id,
             @AuthenticationPrincipal AppUserDetails principal,
             @Valid @RequestBody CreateMemberDto dto
     ) {
-       MemberResponseDto memberResponseDto = companyMemberService.create(id, principal, dto);
-
-       return ResponseEntity.status(HttpStatus.CREATED).body(new DataResponse<>(memberResponseDto));
+        MemberDetailDto memberDetailDto = companyMemberService.create(id, principal, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new DataResponse<>(memberDetailDto));
     }
 
     @PutMapping("/{memberId}")
-    public ResponseEntity<DataResponse<MemberResponseDto>> update(
+    public ResponseEntity<DataResponse<MemberDetailDto>> update(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
             @AuthenticationPrincipal AppUserDetails principal,
             @Valid @RequestBody UpdateMemberDto dto
     ) {
-        MemberResponseDto memberResponseDto = companyMemberService.update(id, memberId, principal, dto);
-
-        return ResponseEntity.ok(new DataResponse<>(memberResponseDto));
+        MemberDetailDto memberDetailDto = companyMemberService.update(id, memberId, principal, dto);
+        return ResponseEntity.ok(new DataResponse<>(memberDetailDto));
     }
 
     @DeleteMapping("/{memberId}")
@@ -79,8 +84,6 @@ public class CompanyMemberController {
             @AuthenticationPrincipal AppUserDetails principal
     ) {
         companyMemberService.delete(id, memberId, principal);
-
         return ResponseEntity.ok(new MessageResponse("Member deleted successfully"));
     }
-
 }

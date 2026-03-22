@@ -12,7 +12,7 @@ public class WebConfig {
     public PageableHandlerMethodArgumentResolverCustomizer pageableCustomizer() {
         return resolver -> {
             resolver.setMaxPageSize(100);
-            resolver.setFallbackPageable(PageRequest.of(1, 20));
+            resolver.setFallbackPageable(PageRequest.of(0, 20));
             resolver.setOneIndexedParameters(true);
         };
     }

@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -72,6 +73,12 @@ public class CompanyMember {
 
     @Column(name = "job_title")
     private String jobTitle;
+
+    @Column(name = "current_salary_amount", precision = 15, scale = 2)
+    private BigDecimal currentSalaryAmount;
+
+    @Column(name = "current_salary_currency", length = 3)
+    private String currentSalaryCurrency;
 
     @Column(name = "department")
     private String department;

@@ -7,7 +7,10 @@ import com.employeehub.employeehub.exception.ConflictException;
 import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
+import com.employeehub.employeehub.repository.JobTitleRecordRepository;
+import com.employeehub.employeehub.repository.SalaryRecordRepository;
 import com.employeehub.employeehub.repository.UserRepository;
+import com.employeehub.employeehub.util.CompanyMemberUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,20 +21,25 @@ import java.util.UUID;
 @Service
 public class CompanyMemberService {
 
-
     private final CompanyMemberRepository companyMemberRepository;
     private final UserRepository userRepository;
+    private final JobTitleRecordRepository jobTitleRecordRepository;
+    private final SalaryRecordRepository salaryRecordRepository;
 
     public CompanyMemberService(
             CompanyMemberRepository companyMemberRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            JobTitleRecordRepository jobTitleRecordRepository,
+            SalaryRecordRepository salaryRecordRepository
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.userRepository = userRepository;
+        this.jobTitleRecordRepository = jobTitleRecordRepository;
+        this.salaryRecordRepository = salaryRecordRepository;
     }
 
     @Transactional
-    public MemberResponseDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
+    public MemberDetailDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
 
         CompanyMember caller = companyMemberRepository
                 .findByUserIdAndCompanyId(principal.getId(), companyId)
@@ -74,33 +82,33 @@ public class CompanyMemberService {
 
         CompanyMember saved = companyMemberRepository.saveAndFlush(newMember);
 
-        return new MemberResponseDto(
-                saved.getId(),
-                saved.getUser() != null ? saved.getUser().getId() : null,
-                saved.getFirstName(),
-                saved.getLastName(),
-                saved.getMiddleName(),
-                saved.getRole(),
-                saved.getMembershipStatus(),
-                saved.getEmploymentStatus(),
-                saved.getSelfServiceEnabled(),
-                saved.getJobTitle(),
-                saved.getDepartment(),
-                saved.getJoinDate(),
-                saved.getWorkEmail(),
-                saved.getPersonalEmail(),
-                saved.getPhoneNumber(),
-                saved.getDateOfBirth(),
-                saved.getAddress(),
-                saved.getPersonalCode(),
-                saved.getBankAccount(),
-                saved.getEmergencyContactName(),
-                saved.getEmergencyContactPhone(),
-                saved.getCreatedAt()
-        );
+        if (dto.jobTitle() != null && !dto.jobTitle().isBlank()) {
+            JobTitleRecord initialRecord = JobTitleRecord.builder()
+                    .companyMember(saved)
+                    .jobTitle(dto.jobTitle())
+                    .changeType(TitleChangeType.INITIAL)
+                    .effectiveDate(dto.joinDate())
+                    .build();
+            jobTitleRecordRepository.save(initialRecord);
+        }
+
+        if (dto.initialSalaryAmount() != null && dto.initialSalaryCurrency() != null) {
+            SalaryRecord initialSalary = SalaryRecord.builder()
+                    .companyMember(saved)
+                    .amount(dto.initialSalaryAmount())
+                    .currency(dto.initialSalaryCurrency())
+                    .effectiveDate(dto.joinDate())
+                    .build();
+            salaryRecordRepository.save(initialSalary);
+            saved.setCurrentSalaryAmount(dto.initialSalaryAmount());
+            saved.setCurrentSalaryCurrency(dto.initialSalaryCurrency());
+            companyMemberRepository.save(saved);
+        }
+
+        return CompanyMemberUtils.toDetailDto(saved);
     }
 
-    public Page<MemberResponseDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
+    public Page<MemberSummaryDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
 
         CompanyMember caller = companyMemberRepository
                 .findByUserIdAndCompanyId(principal.getId(), companyId)
@@ -113,34 +121,27 @@ public class CompanyMemberService {
         String normalizedSearch = (search == null || search.isBlank()) ? "" : search.trim();
 
         return companyMemberRepository.searchByCompanyId(companyId, normalizedSearch, pageable)
-                .map(m -> new MemberResponseDto(
-                        m.getId(),
-                        m.getUser() != null ? m.getUser().getId() : null,
-                        m.getFirstName(),
-                        m.getLastName(),
-                        m.getMiddleName(),
-                        m.getRole(),
-                        m.getMembershipStatus(),
-                        m.getEmploymentStatus(),
-                        m.getSelfServiceEnabled(),
-                        m.getJobTitle(),
-                        m.getDepartment(),
-                        m.getJoinDate(),
-                        m.getWorkEmail(),
-                        m.getPersonalEmail(),
-                        m.getPhoneNumber(),
-                        m.getDateOfBirth(),
-                        m.getAddress(),
-                        m.getPersonalCode(),
-                        m.getBankAccount(),
-                        m.getEmergencyContactName(),
-                        m.getEmergencyContactPhone(),
-                        m.getCreatedAt()
-                ));
+                .map(CompanyMemberUtils::toSummaryDto);
+    }
+
+    public MemberDetailDto getById(UUID companyId, UUID memberId, AppUserDetails principal) {
+
+        CompanyMember caller = companyMemberRepository
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
+                .orElseThrow(() -> new NotFoundException("Member not found"));
+
+        return CompanyMemberUtils.toDetailDto(member);
     }
 
     @Transactional
-    public MemberResponseDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
+    public MemberDetailDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
 
         CompanyMember caller = companyMemberRepository
                 .findByUserIdAndCompanyId(principal.getId(), companyId)
@@ -166,7 +167,6 @@ public class CompanyMemberService {
         member.setMembershipStatus(dto.membershipStatus());
         member.setEmploymentStatus(dto.employmentStatus());
         member.setSelfServiceEnabled(dto.selfServiceEnabled());
-        member.setJobTitle(dto.jobTitle());
         member.setDepartment(dto.department());
         member.setJoinDate(dto.joinDate());
         member.setWorkEmail(dto.workEmail());
@@ -180,30 +180,7 @@ public class CompanyMemberService {
 
         CompanyMember saved = companyMemberRepository.saveAndFlush(member);
 
-        return new MemberResponseDto(
-                saved.getId(),
-                saved.getUser() != null ? saved.getUser().getId() : null,
-                saved.getFirstName(),
-                saved.getLastName(),
-                saved.getMiddleName(),
-                saved.getRole(),
-                saved.getMembershipStatus(),
-                saved.getEmploymentStatus(),
-                saved.getSelfServiceEnabled(),
-                saved.getJobTitle(),
-                saved.getDepartment(),
-                saved.getJoinDate(),
-                saved.getWorkEmail(),
-                saved.getPersonalEmail(),
-                saved.getPhoneNumber(),
-                saved.getDateOfBirth(),
-                saved.getAddress(),
-                saved.getPersonalCode(),
-                saved.getBankAccount(),
-                saved.getEmergencyContactName(),
-                saved.getEmergencyContactPhone(),
-                saved.getCreatedAt()
-        );
+        return CompanyMemberUtils.toDetailDto(saved);
     }
 
     public void delete(UUID companyId, UUID memberId, AppUserDetails principal) {
@@ -229,6 +206,6 @@ public class CompanyMemberService {
         }
 
         companyMemberRepository.delete(target);
-
     }
+
 }

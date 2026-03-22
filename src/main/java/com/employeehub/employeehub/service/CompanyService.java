@@ -84,6 +84,7 @@ public class CompanyService {
                 .toList();
     }
 
+    @Transactional
     public CompanyResponseDto update(AppUserDetails principal, UpdateCompanyDto dto, UUID companyId) {
 
         // check if user is part of the company and if has right roles
