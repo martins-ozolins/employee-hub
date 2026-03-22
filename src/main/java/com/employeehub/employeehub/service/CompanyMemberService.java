@@ -8,14 +8,16 @@ import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
 public class CompanyMemberService {
+
 
     private final CompanyMemberRepository companyMemberRepository;
     private final UserRepository userRepository;
@@ -32,7 +34,7 @@ public class CompanyMemberService {
     public MemberResponseDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
 
         CompanyMember caller = companyMemberRepository
-                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
 
         if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
@@ -98,18 +100,19 @@ public class CompanyMemberService {
         );
     }
 
-    public List<MemberResponseDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal) {
+    public Page<MemberResponseDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
 
         CompanyMember caller = companyMemberRepository
-                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
 
         if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
             throw new ForbiddenException("Access denied");
         }
 
-        return companyMemberRepository.findByCompanyId(companyId)
-                .stream()
+        String normalizedSearch = (search == null || search.isBlank()) ? "" : search.trim();
+
+        return companyMemberRepository.searchByCompanyId(companyId, normalizedSearch, pageable)
                 .map(m -> new MemberResponseDto(
                         m.getId(),
                         m.getUser() != null ? m.getUser().getId() : null,
@@ -133,38 +136,32 @@ public class CompanyMemberService {
                         m.getEmergencyContactName(),
                         m.getEmergencyContactPhone(),
                         m.getCreatedAt()
-                ))
-                .toList();
+                ));
     }
 
     @Transactional
     public MemberResponseDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
 
         CompanyMember caller = companyMemberRepository
-                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
 
         if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
             throw new ForbiddenException("Access denied");
         }
 
-        CompanyMember member = companyMemberRepository.findById(memberId)
+        CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
-        if (!member.getCompany().getId().equals(companyId)) {
-            throw new ForbiddenException("Access denied");
-        }
-
-        // Resync user link if personalEmail changed
-        if (!dto.personalEmail().equals(member.getPersonalEmail())) {
-            User linkedUser = userRepository.findByEmail(dto.personalEmail()).orElse(null);
-            member.setUser(linkedUser);
-            member.setPersonalEmail(dto.personalEmail());
+        if (!member.getPersonalEmail().equals(dto.personalEmail()) &&
+                companyMemberRepository.existsByPersonalEmailAndCompany(dto.personalEmail(), member.getCompany())) {
+            throw new ConflictException("A member with this email already exists in the company");
         }
 
         member.setFirstName(dto.firstName());
         member.setLastName(dto.lastName());
         member.setMiddleName(dto.middleName());
+        member.setPersonalEmail(dto.personalEmail());
         member.setRole(dto.role());
         member.setMembershipStatus(dto.membershipStatus());
         member.setEmploymentStatus(dto.employmentStatus());
@@ -207,5 +204,31 @@ public class CompanyMemberService {
                 saved.getEmergencyContactPhone(),
                 saved.getCreatedAt()
         );
+    }
+
+    public void delete(UUID companyId, UUID memberId, AppUserDetails principal) {
+
+        CompanyMember caller = companyMemberRepository
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
+                .orElseThrow(() -> new ForbiddenException("Access denied"));
+
+        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
+            throw new ForbiddenException("Access denied");
+        }
+
+        CompanyMember target = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
+                .orElseThrow(() -> new NotFoundException("Member not found"));
+
+        if (target.getId().equals(caller.getId())) {
+            throw new ForbiddenException("You cannot delete yourself");
+        }
+
+        if (target.getRole() == CompanyRole.OWNER &&
+                companyMemberRepository.countByCompanyIdAndRole(companyId, CompanyRole.OWNER) <= 1) {
+            throw new ForbiddenException("Cannot delete the last owner. Please assign another owner first");
+        }
+
+        companyMemberRepository.delete(target);
+
     }
 }

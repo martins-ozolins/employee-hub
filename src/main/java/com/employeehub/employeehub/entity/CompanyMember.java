@@ -36,6 +36,7 @@ public class CompanyMember {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CompanyRole role;

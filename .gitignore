@@ -42,6 +42,12 @@ application-local.yaml
 application-secret.properties
 application-secret.yml
 application-secret.yaml
+application-dev.properties
+application-dev.yml
+application-dev.yaml
+application-prod.properties
+application-prod.yml
+application-prod.yaml
 
 ### Logs ###
 *.log

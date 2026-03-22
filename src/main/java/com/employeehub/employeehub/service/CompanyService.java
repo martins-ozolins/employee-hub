@@ -88,7 +88,7 @@ public class CompanyService {
 
         // check if user is part of the company and if has right roles
         CompanyMember member = companyMemberRepository
-                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
 
         if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
@@ -118,7 +118,7 @@ public class CompanyService {
 
         // check if user is part of the company and if has right roles
         CompanyMember member = companyMemberRepository
-                .findMemberByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.getId(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
 
         if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
