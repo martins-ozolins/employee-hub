@@ -11,10 +11,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -37,7 +36,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody UserRegisterDto dto) {
         authService.register(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("User registered"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Registration successful. Please verify your email before logging in."));
     }
 
     @PostMapping("/login")
@@ -67,6 +66,13 @@ public class AuthController {
         CookieUtils.addCookie(response, accessCookieName, tokenPair.accessToken());
         CookieUtils.addCookie(response, refreshCookieName, tokenPair.refreshToken());
         return ResponseEntity.ok(new MessageResponse("Token refreshed"));
+    }
+
+    @GetMapping("verify-email")
+    public ResponseEntity<MessageResponse> verifyEmail(@RequestParam UUID token) {
+        authService.verifyEmail(token);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Email verified successfully"));
     }
 
 }

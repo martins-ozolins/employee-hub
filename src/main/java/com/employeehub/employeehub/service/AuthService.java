@@ -2,15 +2,15 @@ package com.employeehub.employeehub.service;
 
 
 import com.employeehub.employeehub.dto.AuthDtos.*;
-import com.employeehub.employeehub.entity.CompanyMember;
-import com.employeehub.employeehub.entity.PlatformRole;
-import com.employeehub.employeehub.entity.RefreshToken;
-import com.employeehub.employeehub.entity.User;
+import com.employeehub.employeehub.entity.*;
 import com.employeehub.employeehub.exception.EmailAlreadyUsedException;
+import com.employeehub.employeehub.exception.EmailNotVerifiedException;
 import com.employeehub.employeehub.exception.InvalidCredentialsException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
+import com.employeehub.employeehub.service.email.EmailSender;
+import com.employeehub.employeehub.service.email.EmailTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +26,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CompanyMemberRepository companyMemberRepository;
+    private final EmailSender emailSender;
+    private final VerificationTokenService verificationTokenService;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.companyMemberRepository = companyMemberRepository;
+        this.emailSender = emailSender;
+        this.verificationTokenService = verificationTokenService;
     }
 
 
@@ -52,6 +56,7 @@ public class AuthService {
         u.setPasswordHash(passwordEncoder.encode(dto.password()));
         u.setRole(PlatformRole.USER);
         u.setIsActive(true);
+        u.setEmailVerified(false);
 
         User savedUser = userRepository.save(u);
 
@@ -60,6 +65,11 @@ public class AuthService {
             member.setUser(savedUser);
             companyMemberRepository.save(member);
         }
+
+        UUID token = verificationTokenService.generateToken(savedUser, TokenType.EMAIL_VERIFICATION);
+
+        emailSender.send(savedUser.getEmail(), EmailTemplate.EMAIL_VERIFICATION, token);
+
     }
 
     public TokenPair login(LoginDto dto) {
@@ -67,6 +77,15 @@ public class AuthService {
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!user.getIsActive()) throw new InvalidCredentialsException();
+
+        if (!user.getEmailVerified()) {
+
+            UUID token = verificationTokenService.generateToken(user, TokenType.EMAIL_VERIFICATION);
+
+            emailSender.send(user.getEmail(), EmailTemplate.EMAIL_VERIFICATION, token);
+
+            throw new EmailNotVerifiedException();
+        }
 
         if (!passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
@@ -129,6 +148,8 @@ public class AuthService {
         return new TokenPair(newAccessToken, newRefreshResult.token());
     }
 
-
+    public void verifyEmail(UUID token) {
+        verificationTokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+    }
 
 }

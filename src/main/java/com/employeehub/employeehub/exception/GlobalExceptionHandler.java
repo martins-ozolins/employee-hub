@@ -69,6 +69,20 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailNotVerifiedException(EmailNotVerifiedException ex) {
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                Instant.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(error);
+    }
+
     @ExceptionHandler(EmailAlreadyUsedException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyUsedException(EmailAlreadyUsedException ex) {
 
