@@ -37,4 +37,10 @@ public class AuthDtos {
             @NotBlank String passwordConfirmation
     ) {}
 
+    public record ChangePasswordDto(
+            @NotBlank String currentPassword,
+            @NotBlank String newPassword,
+            @NotBlank String passwordConfirmation
+    ) {}
+
 }

@@ -1,6 +1,7 @@
 package com.employeehub.employeehub.controller;
 
 
+import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.ApiResponses.*;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.service.AuthService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -87,6 +89,13 @@ public class AuthController {
         authService.resetPassword(token, dto);
 
         return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Password reset successfully."));
+    }
+
+    @PostMapping("change-password")
+    public ResponseEntity<MessageResponse> changePassword(@AuthenticationPrincipal AppUserDetails principal, @RequestBody @Valid ChangePasswordDto dto) {
+        authService.changePassword(principal, dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Password changed successfully."));
     }
 
 

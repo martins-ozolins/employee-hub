@@ -1,6 +1,7 @@
 package com.employeehub.employeehub.service;
 
 
+import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.entity.*;
 import com.employeehub.employeehub.exception.BadRequestException;
@@ -178,5 +179,21 @@ public class AuthService {
 
         User user = verificationTokenService.verifyToken(token, TokenType.PASSWORD_RESET);
         user.setPasswordHash(passwordEncoder.encode(dto.password()));
+    }
+
+    public void changePassword(AppUserDetails principal, @Valid ChangePasswordDto dto) {
+
+        User user = userRepository.findById(principal.getId()).orElseThrow(() -> new InvalidCredentialsException());
+
+        if (!passwordEncoder.matches(dto.currentPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Current password does not match.");
+        }
+
+        if (!dto.newPassword().equals(dto.passwordConfirmation())) {
+            throw new BadRequestException("Passwords do not match.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+
     }
 }
