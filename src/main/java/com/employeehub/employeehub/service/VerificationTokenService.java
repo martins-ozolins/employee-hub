@@ -38,7 +38,7 @@ public class VerificationTokenService {
     }
 
     @Transactional
-    public void verifyToken(UUID tokenValue, TokenType type) {
+    public User verifyToken(UUID tokenValue, TokenType type) {
         VerificationToken token = verificationTokenRepository
                 .findByTokenAndType(tokenValue, type)
                 .orElseThrow(() -> new NotFoundException("Token not found."));
@@ -52,7 +52,7 @@ public class VerificationTokenService {
         }
 
         token.setUsedAt(Instant.now());
-        token.getUser().setEmailVerified(true);
+        return token.getUser();
     }
 
     private Instant getExpiry(TokenType type) {

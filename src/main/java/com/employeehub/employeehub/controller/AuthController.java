@@ -75,4 +75,19 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Email verified successfully"));
     }
 
+    @PostMapping("forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@RequestBody @Valid ForgotPasswordDto dto) {
+        authService.forgotPassword(dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("If an account with that email exists, a password reset link has been sent."));
+    }
+
+    @PostMapping("reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@RequestParam UUID token, @RequestBody @Valid ResetPasswordDto dto) {
+        authService.resetPassword(token, dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Password reset successfully."));
+    }
+
+
 }

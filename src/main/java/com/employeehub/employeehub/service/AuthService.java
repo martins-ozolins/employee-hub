@@ -3,6 +3,7 @@ package com.employeehub.employeehub.service;
 
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.entity.*;
+import com.employeehub.employeehub.exception.BadRequestException;
 import com.employeehub.employeehub.exception.EmailAlreadyUsedException;
 import com.employeehub.employeehub.exception.EmailNotVerifiedException;
 import com.employeehub.employeehub.exception.InvalidCredentialsException;
@@ -11,11 +12,13 @@ import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.EmailTemplate;
+import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -148,8 +151,32 @@ public class AuthService {
         return new TokenPair(newAccessToken, newRefreshResult.token());
     }
 
+    @Transactional
     public void verifyEmail(UUID token) {
-        verificationTokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+        User user = verificationTokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+        user.setEmailVerified(true);
     }
 
+    public void forgotPassword(ForgotPasswordDto dto) {
+
+        Optional<User> user = userRepository.findByEmail(dto.email());
+
+        if (user.isPresent()) {
+            UUID token = verificationTokenService.generateToken(user.get(), TokenType.PASSWORD_RESET);
+
+            emailSender.send(user.get().getEmail(), EmailTemplate.PASSWORD_RESET, token);
+
+        }
+
+    }
+
+    @Transactional
+    public void resetPassword(UUID token, ResetPasswordDto dto) {
+        if (!dto.password().equals(dto.passwordConfirmation())) {
+            throw new BadRequestException("Passwords do not match.");
+        }
+
+        User user = verificationTokenService.verifyToken(token, TokenType.PASSWORD_RESET);
+        user.setPasswordHash(passwordEncoder.encode(dto.password()));
+    }
 }
