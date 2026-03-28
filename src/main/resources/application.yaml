@@ -1,6 +1,10 @@
 spring:
   application:
     name: EmployeeHub
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${POSTGRES_DB:springboot-employeehub-api}
     username: ${POSTGRES_USER:postgres}
@@ -20,4 +24,14 @@ app:
     issuer: ${TOKEN_ISSUER}
     accessCookieName: access_token
     refreshCookieName: refresh_token
+aws:
+  s3:
+    region: ${AWS_REGION}
+    bucket: ${AWS_S3_BUCKET}
+    accessKey: ${AWS_ACCESS_KEY_ID}
+    secretKey: ${AWS_SECRET_ACCESS_KEY}
+    presignExpireMinutes: ${S3_PRESIGN_EXPIRE_MINUTES:3}
+document:
+  maxSizeBytes: ${DOCUMENT_MAX_SIZE:10485760}
+  allowedContentTypes: application/pdf,image/png,image/jpeg,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
 
