@@ -25,29 +25,27 @@ public class CompanyMemberService {
     private final UserRepository userRepository;
     private final JobTitleRecordRepository jobTitleRecordRepository;
     private final SalaryRecordRepository salaryRecordRepository;
+    private final PermissionService permissionService;
 
     public CompanyMemberService(
             CompanyMemberRepository companyMemberRepository,
             UserRepository userRepository,
             JobTitleRecordRepository jobTitleRecordRepository,
-            SalaryRecordRepository salaryRecordRepository
+            SalaryRecordRepository salaryRecordRepository,
+            PermissionService permissionService
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.userRepository = userRepository;
         this.jobTitleRecordRepository = jobTitleRecordRepository;
         this.salaryRecordRepository = salaryRecordRepository;
+        this.permissionService = permissionService;
     }
 
     @Transactional
     public MemberDetailDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
 
         if (companyMemberRepository.existsByPersonalEmailAndCompany(dto.personalEmail(), caller.getCompany())) {
             throw new ConflictException("A member with this email already exists in the company");
@@ -108,31 +106,26 @@ public class CompanyMemberService {
         return CompanyMemberUtils.toDetailDto(saved);
     }
 
-    public Page<MemberSummaryDto> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
+    public Page<?> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.VIEW_MEMBERS);
 
         String normalizedSearch = (search == null || search.isBlank()) ? "" : search.trim();
 
-        return companyMemberRepository.searchByCompanyId(companyId, normalizedSearch, pageable)
-                .map(CompanyMemberUtils::toSummaryDto);
+        Page<CompanyMember> members = companyMemberRepository.searchByCompanyId(companyId, normalizedSearch, pageable);
+
+        if (permissionService.hasPermission(caller, Permission.VIEW_MEMBER_DETAILS)) {
+            return members.map(CompanyMemberUtils::toSummaryDto);
+        }
+
+        return members.map(CompanyMemberUtils::toDirectoryDto);
     }
 
     public MemberDetailDto getById(UUID companyId, UUID memberId, AppUserDetails principal) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.VIEW_MEMBER_DETAILS);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -143,13 +136,8 @@ public class CompanyMemberService {
     @Transactional
     public MemberDetailDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -185,13 +173,8 @@ public class CompanyMemberService {
 
     public void delete(UUID companyId, UUID memberId, AppUserDetails principal) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
 
         CompanyMember target = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -208,4 +191,28 @@ public class CompanyMemberService {
         companyMemberRepository.delete(target);
     }
 
+    public MemberSelfResponseDto getSelf(UUID companyId, AppUserDetails principal) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkSelfServiceAccess(caller);
+
+        return CompanyMemberUtils.toSelfDto(caller, permissionService.getPermissions(caller));
+    }
+
+    @Transactional
+    public MemberSelfResponseDto updateSelf(UUID companyId, AppUserDetails principal, MemberSelfUpdateDto dto) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkSelfServiceAccess(caller);
+
+        caller.setPhoneNumber(dto.phoneNumber());
+        caller.setAddress(dto.address());
+        caller.setBankAccount(dto.bankAccount());
+        caller.setEmergencyContactName(dto.emergencyContactName());
+        caller.setEmergencyContactPhone(dto.emergencyContactPhone());
+
+        CompanyMember saved = companyMemberRepository.saveAndFlush(caller);
+
+        return CompanyMemberUtils.toSelfDto(saved, permissionService.getPermissions(saved));
+    }
 }

@@ -25,13 +25,13 @@ public class CompanyMemberController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedDataResponse<MemberSummaryDto>> getAllCompanyMembers(
+    public ResponseEntity<PagedDataResponse<?>> getAllCompanyMembers(
             @PathVariable UUID id,
             @AuthenticationPrincipal AppUserDetails principal,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
-        Page<MemberSummaryDto> page = companyMemberService.getAllCompanyMembers(id, principal, search, pageable);
+        Page<?> page = companyMemberService.getAllCompanyMembers(id, principal, search, pageable);
 
         return ResponseEntity.ok(new PagedDataResponse<>(
                 page.getContent(),

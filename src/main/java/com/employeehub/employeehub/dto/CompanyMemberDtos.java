@@ -10,9 +10,12 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import com.employeehub.employeehub.entity.Permission;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 
 public class CompanyMemberDtos {
@@ -123,7 +126,19 @@ public class CompanyMemberDtos {
             String personalCode,
             String bankAccount,
             String emergencyContactName,
-            String emergencyContactPhone
+            String emergencyContactPhone,
+            Set<Permission> permissions
+    ) {}
+
+    // Directory view — minimal info visible to all company members
+    public record MemberDirectoryDto(
+            UUID id,
+            String firstName,
+            String lastName,
+            CompanyRole role,
+            String department,
+            String jobTitle,
+            String workEmail
     ) {}
 
     // Self-service update — only personal/contact fields

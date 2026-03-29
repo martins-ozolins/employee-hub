@@ -43,6 +43,16 @@ public class CompanyController {
         return ResponseEntity.status(HttpStatus.OK).body(new DataResponse<>(companies));
     }
 
+    // GET COMPANY BY ID (basic or full based on role)
+    @GetMapping("/{id}")
+    public ResponseEntity<DataResponse<?>> getById(
+            @AuthenticationPrincipal AppUserDetails principal,
+            @PathVariable UUID id
+    ) {
+        Object company = companyService.getById(principal, id);
+        return ResponseEntity.ok(new DataResponse<>(company));
+    }
+
     // UPDATE COMPANY
     @PutMapping("/{id}")
     public ResponseEntity<MessageAndDataResponse<CompanyResponseDto>> update(

@@ -23,6 +23,13 @@ public class CompanyDtos {
             Instant createdAt
     ) {}
 
+    public record CompanyBasicDto(
+            UUID id,
+            String name,
+            String industry,
+            Instant createdAt
+    ) {}
+
     public record UpdateCompanyDto(
             @NotBlank String name,
             @NotBlank String industry,

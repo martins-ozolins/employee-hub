@@ -3,9 +3,8 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.SalaryDtos.*;
 import com.employeehub.employeehub.entity.CompanyMember;
-import com.employeehub.employeehub.entity.CompanyRole;
+import com.employeehub.employeehub.entity.Permission;
 import com.employeehub.employeehub.entity.SalaryRecord;
-import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.SalaryRecordRepository;
@@ -22,25 +21,23 @@ public class SalaryService {
 
     private final CompanyMemberRepository companyMemberRepository;
     private final SalaryRecordRepository salaryRecordRepository;
+    private final PermissionService permissionService;
 
     public SalaryService(
             CompanyMemberRepository companyMemberRepository,
-            SalaryRecordRepository salaryRecordRepository
+            SalaryRecordRepository salaryRecordRepository,
+            PermissionService permissionService
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.salaryRecordRepository = salaryRecordRepository;
+        this.permissionService = permissionService;
     }
 
     @Transactional
     public SalaryRecordDto add(UUID companyId, UUID memberId, AppUserDetails principal, AddSalaryDto dto) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_SALARY);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -64,13 +61,8 @@ public class SalaryService {
 
     public Page<SalaryRecordDto> getHistory(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.VIEW_MEMBER_DETAILS);
 
         companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
