@@ -4,11 +4,9 @@ import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.DocumentDtos.*;
 import com.employeehub.employeehub.dto.DocumentDtos.DocumentDto;
 import com.employeehub.employeehub.entity.CompanyMember;
-import com.employeehub.employeehub.entity.CompanyRole;
-import com.employeehub.employeehub.entity.MembershipStatus;
 import com.employeehub.employeehub.entity.Document;
+import com.employeehub.employeehub.entity.Permission;
 import com.employeehub.employeehub.exception.BadRequestException;
-import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.DocumentRepository;
@@ -41,18 +39,85 @@ public class DocumentStorageService {
     private final S3Presigner s3Presigner;
     private final String bucketName;
     private final int presignExpireMinutes;
+    private final PermissionService permissionService;
 
-    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes) {
+    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, PermissionService permissionService) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
         this.bucketName = bucketName;
         this.presignExpireMinutes = presignExpireMinutes;
+        this.permissionService = permissionService;
     }
+
+    // ── Admin methods ──
 
     @Transactional
     public DocumentDto upload(UUID companyId, UUID memberId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+
+        CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
+                .orElseThrow(() -> new NotFoundException("Member not found"));
+
+        return doUpload(companyId, member, file, fileName, expiryDate);
+    }
+
+    public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AppUserDetails principal) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+
+        return doDownload(memberId, documentId);
+    }
+
+    public Page<DocumentDto> list(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+
+        companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
+                .orElseThrow(() -> new NotFoundException("Member not found"));
+
+        return documentRepository
+                .findByCompanyMemberIdOrderByUploadedAtDesc(memberId, pageable)
+                .map(DocumentUtils::toDto);
+    }
+
+    // ── Self-service methods ──
+
+    @Transactional
+    public DocumentDto uploadSelf(UUID companyId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkSelfServiceAccess(caller);
+
+        return doUpload(companyId, caller, file, fileName, expiryDate);
+    }
+
+    public DocumentDownloadDto downloadSelf(UUID companyId, UUID documentId, AppUserDetails principal) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkSelfServiceAccess(caller);
+
+        return doDownload(caller.getId(), documentId);
+    }
+
+    public Page<DocumentDto> listSelf(UUID companyId, AppUserDetails principal, Pageable pageable) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkSelfServiceAccess(caller);
+
+        return documentRepository
+                .findByCompanyMemberIdOrderByUploadedAtDesc(caller.getId(), pageable)
+                .map(DocumentUtils::toDto);
+    }
+
+    // ── Shared logic ──
+
+    private DocumentDto doUpload(UUID companyId, CompanyMember member, MultipartFile file, String fileName, LocalDate expiryDate) {
 
         if (file.isEmpty()) {
             throw new BadRequestException("File is required");
@@ -64,23 +129,9 @@ public class DocumentStorageService {
             throw new BadRequestException("File name is required");
         }
 
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            if (!caller.getId().equals(memberId) || !caller.getSelfServiceEnabled()
-                    || caller.getMembershipStatus() != MembershipStatus.ACTIVE) {
-                throw new ForbiddenException("Access denied");
-            }
-        }
-
         if (expiryDate != null && expiryDate.isBefore(LocalDate.now())) {
             throw new BadRequestException("Expiry date cannot be in the past");
         }
-
-        CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
-                .orElseThrow(() -> new NotFoundException("Member not found"));
 
         Document newDocument = Document
                 .builder()
@@ -94,7 +145,7 @@ public class DocumentStorageService {
 
         newDocument = documentRepository.saveAndFlush(newDocument);
 
-        String s3Key = String.format("uploads/%s/%s/%s/%s", companyId, memberId, newDocument.getId(), resolvedFileName);
+        String s3Key = String.format("uploads/%s/%s/%s/%s", companyId, member.getId(), newDocument.getId(), resolvedFileName);
         newDocument.setS3Key(s3Key);
         newDocument = documentRepository.saveAndFlush(newDocument);
 
@@ -112,22 +163,9 @@ public class DocumentStorageService {
         }
 
         return DocumentUtils.toDto(newDocument);
-
     }
 
-    public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AppUserDetails principal) {
-
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            if (!caller.getId().equals(memberId) || !caller.getSelfServiceEnabled()
-                    || caller.getMembershipStatus() != MembershipStatus.ACTIVE) {
-                throw new ForbiddenException("Access denied");
-            }
-        }
-
+    private DocumentDownloadDto doDownload(UUID memberId, UUID documentId) {
 
         Document document = documentRepository.findByIdAndCompanyMemberId(documentId, memberId)
                 .orElseThrow(() -> new NotFoundException("Document not found"));
@@ -146,26 +184,5 @@ public class DocumentStorageService {
         String downloadUrl = s3Presigner.presignGetObject(presignRequest).url().toString();
 
         return new DocumentDownloadDto(document.getId(), document.getFileName(), downloadUrl);
-    }
-
-    public Page<DocumentDto> list(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
-
-        CompanyMember caller = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
-
-        if (caller.getRole() != CompanyRole.OWNER && caller.getRole() != CompanyRole.HR) {
-            if (!caller.getId().equals(memberId) || !caller.getSelfServiceEnabled()
-                    || caller.getMembershipStatus() != MembershipStatus.ACTIVE) {
-                throw new ForbiddenException("Access denied");
-            }
-        }
-
-        companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
-                .orElseThrow(() -> new NotFoundException("Member not found"));
-
-        return documentRepository
-                .findByCompanyMemberIdOrderByUploadedAtDesc(memberId, pageable)
-                .map(DocumentUtils::toDto);
     }
 }

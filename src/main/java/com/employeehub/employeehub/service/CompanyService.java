@@ -3,7 +3,6 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.CompanyDtos.*;
 import com.employeehub.employeehub.entity.*;
-import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.CompanyRepository;
@@ -20,15 +19,18 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyMemberRepository companyMemberRepository;
     private final UserRepository userRepository;
+    private final PermissionService permissionService;
 
     public CompanyService(
             CompanyRepository companyRepository,
             CompanyMemberRepository companyMemberRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            PermissionService permissionService
     ) {
         this.companyRepository = companyRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.userRepository = userRepository;
+        this.permissionService = permissionService;
     }
 
     @Transactional
@@ -84,19 +86,38 @@ public class CompanyService {
                 .toList();
     }
 
+    public Object getById(AppUserDetails principal, UUID companyId) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+
+        Company company = caller.getCompany();
+
+        if (permissionService.hasPermission(caller, Permission.MANAGE_COMPANY)) {
+            return new CompanyResponseDto(
+                    company.getId(),
+                    company.getName(),
+                    company.getIndustry(),
+                    company.getLocation(),
+                    company.getDescription(),
+                    company.getCreatedAt()
+            );
+        }
+
+        return new CompanyBasicDto(
+                company.getId(),
+                company.getName(),
+                company.getIndustry(),
+                company.getCreatedAt()
+        );
+    }
+
     @Transactional
     public CompanyResponseDto update(AppUserDetails principal, UpdateCompanyDto dto, UUID companyId) {
 
-        // check if user is part of the company and if has right roles
-        CompanyMember member = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_COMPANY);
 
-        if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
-
-        Company company = member.getCompany();
+        Company company = caller.getCompany();
         company.setName(dto.name());
         company.setIndustry(dto.industry());
         company.setLocation(dto.location());
@@ -117,19 +138,10 @@ public class CompanyService {
     @Transactional
     public void delete(AppUserDetails principal, UUID companyId) {
 
-        // check if user is part of the company and if has right roles
-        CompanyMember member = companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
-                .orElseThrow(() -> new ForbiddenException("Access denied"));
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, Permission.MANAGE_COMPANY);
 
-        if (member.getRole() != CompanyRole.OWNER && member.getRole() != CompanyRole.HR) {
-            throw new ForbiddenException("Access denied");
-        }
-
-        Company company = member.getCompany();
-
-        companyRepository.delete(company);
-
+        companyRepository.delete(caller.getCompany());
     }
 }
 
