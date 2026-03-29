@@ -82,21 +82,21 @@ public class DocumentStorageService {
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
-        UUID documentId = UUID.randomUUID();
-        String s3Key = String.format("uploads/%s/%s/%s/%s", companyId, memberId, documentId, resolvedFileName);
-
         Document newDocument = Document
                 .builder()
-                .id(documentId)
                 .companyMember(member)
                 .contentType(file.getContentType())
                 .fileSize(file.getSize())
                 .fileName(resolvedFileName)
-                .s3Key(s3Key)
+                .s3Key("pending")
                 .expiryDate(expiryDate)
                 .build();
 
-        documentRepository.save(newDocument);
+        newDocument = documentRepository.saveAndFlush(newDocument);
+
+        String s3Key = String.format("uploads/%s/%s/%s/%s", companyId, memberId, newDocument.getId(), resolvedFileName);
+        newDocument.setS3Key(s3Key);
+        newDocument = documentRepository.saveAndFlush(newDocument);
 
         try {
             s3Client.putObject(
@@ -135,7 +135,7 @@ public class DocumentStorageService {
         GetObjectRequest getRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(document.getS3Key())
-                .responseContentDisposition("attachment; filename=\"" + document.getFileName().replaceAll("[\"\\\\]", "_") + "\"")
+                .responseContentDisposition("inline; filename=\"" + document.getFileName().replaceAll("[\"\\\\]", "_") + "\"")
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
