@@ -54,7 +54,6 @@ public class CompanyService {
                 .lastName(user.getLastName())
                 .middleName(user.getMiddleName())
                 .role(CompanyRole.OWNER)
-                .membershipStatus(MembershipStatus.ACTIVE)
                 .employmentStatus(EmploymentStatus.ACTIVE)
                 .selfServiceEnabled(true)
                 .personalEmail(user.getEmail())

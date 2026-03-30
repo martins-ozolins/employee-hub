@@ -2,7 +2,6 @@ package com.employeehub.employeehub.dto;
 
 import com.employeehub.employeehub.entity.CompanyRole;
 import com.employeehub.employeehub.entity.EmploymentStatus;
-import com.employeehub.employeehub.entity.MembershipStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -50,7 +49,6 @@ public class CompanyMemberDtos {
             @Size(max = 100) String middleName,
             @NotBlank @Email @Size(max = 255) String personalEmail,
             @NotNull CompanyRole role,
-            @NotNull MembershipStatus membershipStatus,
             @NotNull EmploymentStatus employmentStatus,
             @NotNull Boolean selfServiceEnabled,
             @NotBlank @Size(max = 100) String department,
@@ -73,7 +71,6 @@ public class CompanyMemberDtos {
             String middleName,
             String lastName,
             CompanyRole role,
-            MembershipStatus membershipStatus,
             EmploymentStatus employmentStatus,
             String jobTitle,
             String department,
@@ -89,7 +86,6 @@ public class CompanyMemberDtos {
             String lastName,
             String middleName,
             CompanyRole role,
-            MembershipStatus membershipStatus,
             EmploymentStatus employmentStatus,
             Boolean selfServiceEnabled,
             String jobTitle,

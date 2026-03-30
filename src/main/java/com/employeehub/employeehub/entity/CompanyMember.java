@@ -42,10 +42,6 @@ public class CompanyMember {
     @Column(nullable = false)
     private CompanyRole role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MembershipStatus membershipStatus;
-
     @Column(nullable = false)
     private Boolean selfServiceEnabled;
 

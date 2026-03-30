@@ -3,7 +3,7 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.entity.CompanyMember;
 import com.employeehub.employeehub.entity.CompanyRole;
-import com.employeehub.employeehub.entity.MembershipStatus;
+import com.employeehub.employeehub.entity.EmploymentStatus;
 import com.employeehub.employeehub.entity.Permission;
 import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
@@ -69,7 +69,7 @@ public class PermissionService {
 
     public void checkSelfServiceAccess(CompanyMember caller) {
         if (!Boolean.TRUE.equals(caller.getSelfServiceEnabled())
-                || caller.getMembershipStatus() != MembershipStatus.ACTIVE) {
+                || caller.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
             throw new ForbiddenException("Access denied");
         }
     }

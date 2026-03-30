@@ -12,8 +12,11 @@ import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import com.employeehub.employeehub.service.email.EmailSender;
-import com.employeehub.employeehub.service.email.EmailTemplate;
+import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
+import com.employeehub.employeehub.service.email.templates.PasswordChangedEmail;
+import com.employeehub.employeehub.service.email.templates.PasswordResetEmail;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +35,10 @@ public class AuthService {
     private final CompanyMemberRepository companyMemberRepository;
     private final EmailSender emailSender;
     private final VerificationTokenService verificationTokenService;
+    private final String baseUrl;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -42,6 +46,7 @@ public class AuthService {
         this.companyMemberRepository = companyMemberRepository;
         this.emailSender = emailSender;
         this.verificationTokenService = verificationTokenService;
+        this.baseUrl = baseUrl;
     }
 
 
@@ -72,7 +77,7 @@ public class AuthService {
 
         UUID token = verificationTokenService.generateToken(savedUser, TokenType.EMAIL_VERIFICATION);
 
-        emailSender.send(savedUser.getEmail(), EmailTemplate.EMAIL_VERIFICATION, token);
+        emailSender.send(savedUser.getEmail(), new EmailVerificationEmail(baseUrl, token));
 
     }
 
@@ -86,7 +91,7 @@ public class AuthService {
 
             UUID token = verificationTokenService.generateToken(user, TokenType.EMAIL_VERIFICATION);
 
-            emailSender.send(user.getEmail(), EmailTemplate.EMAIL_VERIFICATION, token);
+            emailSender.send(user.getEmail(), new EmailVerificationEmail(baseUrl, token));
 
             throw new EmailNotVerifiedException();
         }
@@ -165,7 +170,7 @@ public class AuthService {
         if (user.isPresent()) {
             UUID token = verificationTokenService.generateToken(user.get(), TokenType.PASSWORD_RESET);
 
-            emailSender.send(user.get().getEmail(), EmailTemplate.PASSWORD_RESET, token);
+            emailSender.send(user.get().getEmail(), new PasswordResetEmail(baseUrl, token));
 
         }
 
@@ -194,6 +199,8 @@ public class AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+
+        emailSender.send(user.getEmail(), new PasswordChangedEmail());
 
     }
 }

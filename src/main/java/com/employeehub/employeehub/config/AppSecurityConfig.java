@@ -39,6 +39,7 @@ public class AppSecurityConfig {
         http.csrf(csrf -> csrf.disable());
 
         http.authorizeHttpRequests(req -> req
+                .requestMatchers("/auth/change-password").authenticated()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/favicon.ico").permitAll()

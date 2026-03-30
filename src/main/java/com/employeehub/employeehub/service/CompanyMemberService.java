@@ -61,7 +61,6 @@ public class CompanyMemberService {
                 .lastName(dto.lastName())
                 .middleName(dto.middleName())
                 .role(dto.role())
-                .membershipStatus(MembershipStatus.ACTIVE)
                 .employmentStatus(EmploymentStatus.ACTIVE)
                 .selfServiceEnabled(dto.selfServiceEnabled())
                 .personalEmail(dto.personalEmail())
@@ -152,7 +151,6 @@ public class CompanyMemberService {
         member.setMiddleName(dto.middleName());
         member.setPersonalEmail(dto.personalEmail());
         member.setRole(dto.role());
-        member.setMembershipStatus(dto.membershipStatus());
         member.setEmploymentStatus(dto.employmentStatus());
         member.setSelfServiceEnabled(dto.selfServiceEnabled());
         member.setDepartment(dto.department());
