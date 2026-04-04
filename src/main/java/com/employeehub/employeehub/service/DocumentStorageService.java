@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -39,15 +40,19 @@ public class DocumentStorageService {
     private final S3Presigner s3Presigner;
     private final String bucketName;
     private final int presignExpireMinutes;
+    private final long maxSizeBytes;
+    private final List<String> allowedContentTypes;
     private final PermissionService permissionService;
 
-    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, PermissionService permissionService) {
+    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, PermissionService permissionService) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
         this.bucketName = bucketName;
         this.presignExpireMinutes = presignExpireMinutes;
+        this.maxSizeBytes = maxSizeBytes;
+        this.allowedContentTypes = allowedContentTypes;
         this.permissionService = permissionService;
     }
 
@@ -123,6 +128,15 @@ public class DocumentStorageService {
             throw new BadRequestException("File is required");
         }
 
+        if (file.getSize() > maxSizeBytes) {
+            throw new BadRequestException("File exceeds maximum allowed size of " + (maxSizeBytes / 1024 / 1024) + " MB");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !allowedContentTypes.contains(contentType)) {
+            throw new BadRequestException("File type not allowed. Allowed types: " + String.join(", ", allowedContentTypes));
+        }
+
         String resolvedFileName = (fileName != null && !fileName.isBlank()) ? fileName.trim() : file.getOriginalFilename();
 
         if (resolvedFileName == null || resolvedFileName.isBlank()) {
@@ -136,7 +150,7 @@ public class DocumentStorageService {
         Document newDocument = Document
                 .builder()
                 .companyMember(member)
-                .contentType(file.getContentType())
+                .contentType(contentType)
                 .fileSize(file.getSize())
                 .fileName(resolvedFileName)
                 .s3Key("pending")
@@ -154,7 +168,7 @@ public class DocumentStorageService {
                     PutObjectRequest.builder()
                             .bucket(bucketName)
                             .key(s3Key)
-                            .contentType(file.getContentType())
+                            .contentType(contentType)
                             .build(),
                     RequestBody.fromBytes(file.getBytes())
             );
