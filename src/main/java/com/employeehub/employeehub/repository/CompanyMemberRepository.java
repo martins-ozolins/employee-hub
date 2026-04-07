@@ -34,6 +34,8 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, UU
 
     long countByCompanyIdAndRole(UUID companyId, CompanyRole role);
 
+    List<CompanyMember> findByCompanyIdAndRoleIn(UUID companyId, List<CompanyRole> roles);
+
     @Query("""
             SELECT cm FROM CompanyMember cm
             WHERE cm.company.id = :companyId
