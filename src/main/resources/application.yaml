@@ -15,6 +15,11 @@ spring:
     show-sql: true
   profiles:
     active: ${APP_PROFILE:local}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 app:
   baseUrl: ${APP_BASE_URL:http://localhost:8080}
   jwt:
