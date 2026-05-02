@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,7 +20,6 @@ public class SmtpEmailService implements EmailSender {
         this.mailSender = mailSender;
     }
 
-    @Async("emailExecutor")
     @Override
     public void send(String to, EmailTemplate template) {
         try {

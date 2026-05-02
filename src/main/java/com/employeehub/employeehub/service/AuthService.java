@@ -4,6 +4,9 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.entity.*;
+import com.employeehub.employeehub.event.EmailEvent;
+import com.employeehub.employeehub.event.EmailEventPublisher;
+import com.employeehub.employeehub.event.EmailEventType;
 import com.employeehub.employeehub.exception.BadRequestException;
 import com.employeehub.employeehub.exception.EmailAlreadyUsedException;
 import com.employeehub.employeehub.exception.EmailNotVerifiedException;
@@ -16,14 +19,13 @@ import com.employeehub.employeehub.service.email.templates.EmailVerificationEmai
 import com.employeehub.employeehub.service.email.templates.PasswordChangedEmail;
 import com.employeehub.employeehub.service.email.templates.PasswordResetEmail;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuthService {
@@ -36,9 +38,10 @@ public class AuthService {
     private final EmailSender emailSender;
     private final VerificationTokenService verificationTokenService;
     private final String baseUrl;
+    private final EmailEventPublisher emailEventPublisher;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl, EmailEventPublisher emailEventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -47,6 +50,7 @@ public class AuthService {
         this.emailSender = emailSender;
         this.verificationTokenService = verificationTokenService;
         this.baseUrl = baseUrl;
+        this.emailEventPublisher = emailEventPublisher;
     }
 
 
@@ -77,8 +81,10 @@ public class AuthService {
 
         UUID token = verificationTokenService.generateToken(savedUser, TokenType.EMAIL_VERIFICATION);
 
-        emailSender.send(savedUser.getEmail(), new EmailVerificationEmail(baseUrl, token));
-
+        Map<String, String> params = new HashMap<>();
+        params.put("token", token.toString());
+        params.put("baseUrl", baseUrl);
+        emailEventPublisher.publish(new EmailEvent(EmailEventType.EMAIL_VERIFICATION, savedUser.getEmail(), params));
     }
 
     public TokenPair login(LoginDto dto) {
