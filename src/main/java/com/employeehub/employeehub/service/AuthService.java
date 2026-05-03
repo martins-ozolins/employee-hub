@@ -16,7 +16,6 @@ import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
-import com.employeehub.employeehub.service.email.templates.PasswordChangedEmail;
 import com.employeehub.employeehub.service.email.templates.PasswordResetEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -190,6 +189,9 @@ public class AuthService {
 
         User user = verificationTokenService.verifyToken(token, TokenType.PASSWORD_RESET);
         user.setPasswordHash(passwordEncoder.encode(dto.password()));
+
+        emailEventPublisher.publish(new EmailEvent(EmailEventType.PASSWORD_RESET, user.getEmail(), Map.of()));
+
     }
 
     public void changePassword(AppUserDetails principal, @Valid ChangePasswordDto dto) {
@@ -206,7 +208,7 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
 
-        emailSender.send(user.getEmail(), new PasswordChangedEmail());
+        emailEventPublisher.publish(new EmailEvent(EmailEventType.PASSWORD_CHANGED, user.getEmail(), Map.of()));
 
     }
 }

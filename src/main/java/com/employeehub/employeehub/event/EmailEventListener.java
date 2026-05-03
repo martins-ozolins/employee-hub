@@ -5,6 +5,7 @@ import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.EmailTemplate;
 import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
 import com.employeehub.employeehub.service.email.templates.PasswordChangedEmail;
+import com.employeehub.employeehub.service.email.templates.PasswordResetCompleteEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -33,6 +34,7 @@ public class EmailEventListener {
                     UUID.fromString(event.getData().get("token"))
             );
             case PASSWORD_CHANGED -> new PasswordChangedEmail();
+            case PASSWORD_RESET -> new PasswordResetCompleteEmail();
         };
 
         emailSender.send(event.getRecipientEmail(), template);
