@@ -16,7 +16,6 @@ import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
-import com.employeehub.employeehub.service.email.templates.PasswordResetEmail;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Value;
@@ -175,7 +174,10 @@ public class AuthService {
         if (user.isPresent()) {
             UUID token = verificationTokenService.generateToken(user.get(), TokenType.PASSWORD_RESET);
 
-            emailSender.send(user.get().getEmail(), new PasswordResetEmail(baseUrl, token));
+            Map<String, String> params = new HashMap<>();
+            params.put("token", token.toString());
+            params.put("baseUrl", baseUrl);
+            emailEventPublisher.publish(new EmailEvent(EmailEventType.PASSWORD_RESET_REQUESTED, user.get().getEmail(), params));
 
         }
 
