@@ -14,10 +14,7 @@ import com.employeehub.employeehub.exception.InvalidCredentialsException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
-import com.employeehub.employeehub.service.email.EmailSender;
-import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,19 +30,17 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CompanyMemberRepository companyMemberRepository;
-    private final EmailSender emailSender;
     private final VerificationTokenService verificationTokenService;
     private final String baseUrl;
     private final EmailEventPublisher emailEventPublisher;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, EmailSender emailSender, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl, EmailEventPublisher emailEventPublisher) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl, EmailEventPublisher emailEventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.companyMemberRepository = companyMemberRepository;
-        this.emailSender = emailSender;
         this.verificationTokenService = verificationTokenService;
         this.baseUrl = baseUrl;
         this.emailEventPublisher = emailEventPublisher;
@@ -95,7 +90,10 @@ public class AuthService {
 
             UUID token = verificationTokenService.generateToken(user, TokenType.EMAIL_VERIFICATION);
 
-            emailSender.send(user.getEmail(), new EmailVerificationEmail(baseUrl, token));
+            Map<String, String> params = new HashMap<>();
+            params.put("token", token.toString());
+            params.put("baseUrl", baseUrl);
+            emailEventPublisher.publish(new EmailEvent(EmailEventType.EMAIL_VERIFICATION, user.getEmail(), params));
 
             throw new EmailNotVerifiedException();
         }
