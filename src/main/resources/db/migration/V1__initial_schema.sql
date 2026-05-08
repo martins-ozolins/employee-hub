@@ -102,3 +102,12 @@ CREATE TABLE documents (
     expiry_date       DATE,
     uploaded_at       TIMESTAMPTZ NOT NULL
 );
+
+-- Indexes
+CREATE INDEX idx_company_members_company_id    ON company_members(company_id);
+CREATE INDEX idx_company_members_user_id       ON company_members(user_id);
+CREATE INDEX idx_salary_history_member_id      ON salary_history(company_member_id);
+CREATE INDEX idx_job_title_history_member_id   ON job_title_history(company_member_id);
+CREATE INDEX idx_documents_member_id           ON documents(company_member_id);
+CREATE INDEX idx_refresh_tokens_user_id        ON refresh_tokens(user_id);
+CREATE INDEX idx_verification_tokens_user_id   ON verification_tokens(user_id);
