@@ -1,12 +1,16 @@
 package com.employeehub.employeehub.service;
 
 import com.employeehub.employeehub.dto.AuthDtos.*;
+import com.employeehub.employeehub.entity.PlatformRole;
+import com.employeehub.employeehub.entity.RefreshToken;
 import com.employeehub.employeehub.entity.TokenType;
 import com.employeehub.employeehub.entity.User;
 import com.employeehub.employeehub.event.EmailEvent;
 import com.employeehub.employeehub.event.EmailEventPublisher;
 import com.employeehub.employeehub.event.EmailEventType;
 import com.employeehub.employeehub.exception.EmailAlreadyUsedException;
+import com.employeehub.employeehub.exception.EmailNotVerifiedException;
+import com.employeehub.employeehub.exception.InvalidCredentialsException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.RefreshTokenRepository;
 import com.employeehub.employeehub.repository.UserRepository;
@@ -18,7 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,5 +163,142 @@ class AuthServiceTest {
         // Verify: because registration failed early, no user should be saved and no email should be sent.
         verify(userRepository, never()).save(any());
         verify(emailEventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void login_whenCredentialsValid_returnsTokenPair() {
+        // Arrange: create input data for the method we want to test.
+        LoginDto dto = new LoginDto(
+                "user@test.com",
+                "User"
+        );
+
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("user@test.com")
+                .passwordHash("encoded-password")
+                .firstName("User")
+                .lastName("Test")
+                .isActive(true)
+                .emailVerified(true)
+                .role(PlatformRole.USER)
+                .build();
+
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(dto.password(), user.getPasswordHash())).thenReturn(true);
+
+        when(jwtService.generateAccessToken(user.getEmail(), user.getId())).thenReturn("mock-access-token");
+
+        RefreshTokenResult refreshTokenResult = new RefreshTokenResult(
+                "mock-refresh-token",
+                UUID.randomUUID(),
+                Instant.now().plusSeconds(604800)
+        );
+
+        when(jwtService.generateRefreshToken(user.getEmail(), user.getId())).thenReturn(refreshTokenResult);
+
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+
+        TokenPair result = authService.login(dto);
+
+        verify(userRepository).findByEmail("user@test.com");
+        verify(passwordEncoder).matches(dto.password(), user.getPasswordHash());
+        verify(jwtService).generateAccessToken(user.getEmail(), user.getId());
+        verify(jwtService).generateRefreshToken(user.getEmail(), user.getId());
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
+
+
+        assertThat(result.accessToken()).isEqualTo("mock-access-token");
+        assertThat(result.refreshToken()).isEqualTo("mock-refresh-token");
+
+    }
+
+    @Test
+    void login_whenEmailNotFound_throwsException() {
+
+        // Arrange: create input data for the method we want to test.
+        LoginDto dto = new LoginDto(
+                "user@test.com",
+                "User"
+        );
+
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(dto))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+    }
+
+    @Test
+    void login_whenPasswordIncorrect_throwsException() {
+
+        // Arrange: create input data for the method we want to test.
+        LoginDto dto = new LoginDto(
+                "user@test.com",
+                "User"
+        );
+
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("user@test.com")
+                .passwordHash("encoded-password")
+                .firstName("User")
+                .lastName("Test")
+                .isActive(true)
+                .emailVerified(true)
+                .role(PlatformRole.USER)
+                .build();
+
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(dto.password(), user.getPasswordHash())).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.login(dto)).isInstanceOf(InvalidCredentialsException.class);
+
+    }
+
+    @Test
+    void login_whenEmailNotVerified_throwsException() {
+
+        // Arrange: create input data for the method we want to test.
+        LoginDto dto = new LoginDto(
+                "user@test.com",
+                "User"
+        );
+
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .email("user@test.com")
+                .passwordHash("encoded-password")
+                .firstName("User")
+                .lastName("Test")
+                .isActive(true)
+                .emailVerified(false)
+                .role(PlatformRole.USER)
+                .build();
+
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(user));
+
+        UUID token = UUID.randomUUID();
+        when(verificationTokenService.generateToken(user, TokenType.EMAIL_VERIFICATION)).thenReturn(token);
+
+        assertThatThrownBy(() -> authService.login(dto)).isInstanceOf(EmailNotVerifiedException.class);
+
+        ArgumentCaptor<EmailEvent> eventCaptor = ArgumentCaptor.forClass(EmailEvent.class);
+        verify(emailEventPublisher).publish(eventCaptor.capture());
+
+        // Now we can inspect the actual EmailEvent created by AuthService.
+        EmailEvent event = eventCaptor.getValue();
+
+        // Assert: verify the published email event contains the expected verification data.
+        assertThat(event.getType()).isEqualTo(EmailEventType.EMAIL_VERIFICATION);
+        assertThat(event.getRecipientEmail()).isEqualTo("user@test.com");
+        assertThat(event.getData().get("token")).isEqualTo(token.toString());
+        assertThat(event.getData().get("baseUrl")).isEqualTo("http://localhost:8080");
+
+
+
     }
 }
