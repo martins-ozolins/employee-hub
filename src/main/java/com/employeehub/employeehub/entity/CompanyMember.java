@@ -38,9 +38,9 @@ public class CompanyMember {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CompanyRole role;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private CompanyRoleEntity companyRole;
 
     @Column(nullable = false)
     private Boolean selfServiceEnabled;
