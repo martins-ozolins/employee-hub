@@ -5,7 +5,6 @@ import com.employeehub.employeehub.dto.CompanyMemberDtos.MemberDirectoryDto;
 import com.employeehub.employeehub.dto.CompanyMemberDtos.MemberSelfResponseDto;
 import com.employeehub.employeehub.dto.CompanyMemberDtos.MemberSummaryDto;
 import com.employeehub.employeehub.entity.CompanyMember;
-import com.employeehub.employeehub.entity.Permission;
 
 import java.util.Set;
 
@@ -20,7 +19,8 @@ public class CompanyMemberUtils {
                 m.getFirstName(),
                 m.getMiddleName(),
                 m.getLastName(),
-                m.getRole(),
+                m.getCompanyRole().getId(),
+                m.getCompanyRole().getName(),
                 m.getEmploymentStatus(),
                 m.getJobTitle(),
                 m.getDepartment(),
@@ -34,14 +34,14 @@ public class CompanyMemberUtils {
                 m.getId(),
                 m.getFirstName(),
                 m.getLastName(),
-                m.getRole(),
+                m.getCompanyRole().getName(),
                 m.getDepartment(),
                 m.getJobTitle(),
                 m.getWorkEmail()
         );
     }
 
-    public static MemberSelfResponseDto toSelfDto(CompanyMember m, Set<Permission> permissions) {
+    public static MemberSelfResponseDto toSelfDto(CompanyMember m, Set<String> permissions) {
         return new MemberSelfResponseDto(
                 m.getId(),
                 m.getFirstName(),
@@ -70,7 +70,8 @@ public class CompanyMemberUtils {
                 m.getFirstName(),
                 m.getLastName(),
                 m.getMiddleName(),
-                m.getRole(),
+                m.getCompanyRole().getId(),
+                m.getCompanyRole().getName(),
                 m.getEmploymentStatus(),
                 m.getSelfServiceEnabled(),
                 m.getJobTitle(),

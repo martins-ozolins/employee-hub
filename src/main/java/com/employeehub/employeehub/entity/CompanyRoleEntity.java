@@ -34,14 +34,14 @@ public class CompanyRoleEntity {
     @Column(name = "is_system", nullable = false)
     private boolean isSystem;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "company_role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     @Builder.Default
-    private Set<PermissionEntity> permissions = new HashSet<>();
+    private Set<CompanyPermissionEntity> permissions = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

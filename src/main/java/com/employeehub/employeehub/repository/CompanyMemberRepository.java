@@ -1,8 +1,8 @@
 package com.employeehub.employeehub.repository;
 
 import com.employeehub.employeehub.entity.Company;
-import com.employeehub.employeehub.entity.CompanyRole;
 import com.employeehub.employeehub.entity.CompanyMember;
+import com.employeehub.employeehub.entity.CompanyRoleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,9 +32,18 @@ public interface CompanyMemberRepository extends JpaRepository<CompanyMember, UU
 
     boolean existsByPersonalEmailAndCompany(String email, Company company);
 
-    long countByCompanyIdAndRole(UUID companyId, CompanyRole role);
+    long countByCompanyIdAndCompanyRole(UUID companyId, CompanyRoleEntity companyRole);
 
-    List<CompanyMember> findByCompanyIdAndRoleIn(UUID companyId, List<CompanyRole> roles);
+    @Query("""
+            SELECT DISTINCT cm FROM CompanyMember cm
+            JOIN cm.companyRole cr
+            JOIN cr.permissions p
+            WHERE cm.company.id = :companyId AND p.name = :permissionName
+            """)
+    List<CompanyMember> findByCompanyIdAndPermission(
+            @Param("companyId") UUID companyId,
+            @Param("permissionName") String permissionName
+    );
 
     @Query("""
             SELECT cm FROM CompanyMember cm
