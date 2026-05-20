@@ -12,8 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,17 +20,17 @@ import java.util.Set;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
-public class PermissionServiceTest {
+public class CompanyPermissionServiceTest {
 
     @Mock
     CompanyMemberRepository companyMemberRepository;
 
-    PermissionService permissionService;
+    CompanyPermissionService permissionService;
 
     @BeforeEach
     void setup() {
 
-        permissionService = new PermissionService(companyMemberRepository);
+        permissionService = new CompanyPermissionService(companyMemberRepository);
 
     }
 
@@ -75,7 +74,7 @@ public class PermissionServiceTest {
                 .role(CompanyRole.HR)
                 .build();
 
-        assertThat(permissionService.hasPermission(member, Permission.VIEW_MEMBERS)).isTrue();
+        assertThat(permissionService.hasPermission(member, CompanyPermission.VIEW_MEMBERS)).isTrue();
 
 
     }
@@ -87,7 +86,7 @@ public class PermissionServiceTest {
                 .role(CompanyRole.EMPLOYEE)
                 .build();
 
-        assertThat(permissionService.hasPermission(member, Permission.MANAGE_MEMBERS)).isFalse();
+        assertThat(permissionService.hasPermission(member, CompanyPermission.MANAGE_MEMBERS)).isFalse();
 
     }
 
@@ -98,7 +97,7 @@ public class PermissionServiceTest {
                 .role(CompanyRole.MANAGER)
                 .build();
 
-        assertThatThrownBy(() -> permissionService.checkPermission(member, Permission.MANAGE_SALARY))
+        assertThatThrownBy(() -> permissionService.checkPermission(member, CompanyPermission.MANAGE_SALARY))
                 .isInstanceOf(ForbiddenException.class);
 
     }
@@ -110,17 +109,17 @@ public class PermissionServiceTest {
                 .role(CompanyRole.HR)
                 .build();
 
-        Set<Permission> permissions = permissionService.getPermissions(member);
+        Set<CompanyPermission> permissions = permissionService.getPermissions(member);
 
         assertThat(permissions).contains(
-                Permission.VIEW_MEMBERS,
-                Permission.VIEW_MEMBER_DETAILS,
-                Permission.MANAGE_MEMBERS,
-                Permission.MANAGE_SALARY,
-                Permission.MANAGE_JOB_TITLES,
-                Permission.MANAGE_DOCUMENTS
+                CompanyPermission.VIEW_MEMBERS,
+                CompanyPermission.VIEW_MEMBER_DETAILS,
+                CompanyPermission.MANAGE_MEMBERS,
+                CompanyPermission.MANAGE_SALARY,
+                CompanyPermission.MANAGE_JOB_TITLES,
+                CompanyPermission.MANAGE_DOCUMENTS
         );
-        assertThat(permissions).doesNotContain(Permission.MANAGE_COMPANY);
+        assertThat(permissions).doesNotContain(CompanyPermission.MANAGE_COMPANY);
 
     }
 

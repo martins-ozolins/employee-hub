@@ -5,7 +5,7 @@ import com.employeehub.employeehub.dto.DocumentDtos.*;
 import com.employeehub.employeehub.dto.DocumentDtos.DocumentDto;
 import com.employeehub.employeehub.entity.CompanyMember;
 import com.employeehub.employeehub.entity.Document;
-import com.employeehub.employeehub.entity.Permission;
+import com.employeehub.employeehub.entity.CompanyPermission;
 import com.employeehub.employeehub.exception.BadRequestException;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
@@ -42,9 +42,9 @@ public class DocumentStorageService {
     private final int presignExpireMinutes;
     private final long maxSizeBytes;
     private final List<String> allowedContentTypes;
-    private final PermissionService permissionService;
+    private final CompanyPermissionService permissionService;
 
-    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, PermissionService permissionService) {
+    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, CompanyPermissionService permissionService) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.s3Client = s3Client;
@@ -62,7 +62,7 @@ public class DocumentStorageService {
     public DocumentDto upload(UUID companyId, UUID memberId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -73,7 +73,7 @@ public class DocumentStorageService {
     public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AppUserDetails principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
 
         return doDownload(memberId, documentId);
     }
@@ -81,7 +81,7 @@ public class DocumentStorageService {
     public Page<DocumentDto> list(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_DOCUMENTS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
 
         companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));

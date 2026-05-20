@@ -1,6 +1,5 @@
 package com.employeehub.employeehub.dto;
 
-import com.employeehub.employeehub.entity.CompanyRole;
 import com.employeehub.employeehub.entity.EmploymentStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,8 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-
-import com.employeehub.employeehub.entity.Permission;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,7 +22,7 @@ public class CompanyMemberDtos {
             @NotBlank @Size(max = 100) String lastName,
             @Size(max = 100) String middleName,
             @NotBlank @Email @Size(max = 255) String personalEmail,
-            @NotNull CompanyRole role,
+            @NotNull UUID roleId,
             @NotNull Boolean selfServiceEnabled,
             @Size(max = 255) String jobTitle,
             @NotBlank @Size(max = 100) String department,
@@ -48,7 +45,7 @@ public class CompanyMemberDtos {
             @NotBlank @Size(max = 100) String lastName,
             @Size(max = 100) String middleName,
             @NotBlank @Email @Size(max = 255) String personalEmail,
-            @NotNull CompanyRole role,
+            @NotNull UUID roleId,
             @NotNull EmploymentStatus employmentStatus,
             @NotNull Boolean selfServiceEnabled,
             @NotBlank @Size(max = 100) String department,
@@ -70,7 +67,8 @@ public class CompanyMemberDtos {
             String firstName,
             String middleName,
             String lastName,
-            CompanyRole role,
+            UUID roleId,
+            String roleName,
             EmploymentStatus employmentStatus,
             String jobTitle,
             String department,
@@ -85,7 +83,8 @@ public class CompanyMemberDtos {
             String firstName,
             String lastName,
             String middleName,
-            CompanyRole role,
+            UUID roleId,
+            String roleName,
             EmploymentStatus employmentStatus,
             Boolean selfServiceEnabled,
             String jobTitle,
@@ -123,7 +122,7 @@ public class CompanyMemberDtos {
             String bankAccount,
             String emergencyContactName,
             String emergencyContactPhone,
-            Set<Permission> permissions
+            Set<String> permissions
     ) {}
 
     // Directory view — minimal info visible to all company members
@@ -131,7 +130,7 @@ public class CompanyMemberDtos {
             UUID id,
             String firstName,
             String lastName,
-            CompanyRole role,
+            String roleName,
             String department,
             String jobTitle,
             String workEmail

@@ -1,6 +1,6 @@
 package com.employeehub.employeehub.entity;
 
-public enum Permission {
+public enum CompanyPermission {
     MANAGE_COMPANY,
     VIEW_MEMBERS,
     VIEW_MEMBER_DETAILS,
