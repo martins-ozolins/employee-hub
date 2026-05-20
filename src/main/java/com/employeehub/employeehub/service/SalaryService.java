@@ -3,7 +3,7 @@ package com.employeehub.employeehub.service;
 import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.SalaryDtos.*;
 import com.employeehub.employeehub.entity.CompanyMember;
-import com.employeehub.employeehub.entity.Permission;
+import com.employeehub.employeehub.entity.CompanyPermission;
 import com.employeehub.employeehub.entity.SalaryRecord;
 import com.employeehub.employeehub.exception.NotFoundException;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
@@ -21,12 +21,12 @@ public class SalaryService {
 
     private final CompanyMemberRepository companyMemberRepository;
     private final SalaryRecordRepository salaryRecordRepository;
-    private final PermissionService permissionService;
+    private final CompanyPermissionService permissionService;
 
     public SalaryService(
             CompanyMemberRepository companyMemberRepository,
             SalaryRecordRepository salaryRecordRepository,
-            PermissionService permissionService
+            CompanyPermissionService permissionService
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.salaryRecordRepository = salaryRecordRepository;
@@ -37,7 +37,7 @@ public class SalaryService {
     public SalaryRecordDto add(UUID companyId, UUID memberId, AppUserDetails principal, AddSalaryDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_SALARY);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_SALARY);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -62,7 +62,7 @@ public class SalaryService {
     public Page<SalaryRecordDto> getHistory(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.VIEW_MEMBER_DETAILS);
+        permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS);
 
         companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));

@@ -21,7 +21,7 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyMemberRepository companyMemberRepository;
     private final UserRepository userRepository;
-    private final PermissionService permissionService;
+    private final CompanyPermissionService permissionService;
     private final CompanyRoleRepository companyRoleRepository;
     private final CompanyPermissionRepository companyPermissionRepository;
 
@@ -29,7 +29,7 @@ public class CompanyService {
             CompanyRepository companyRepository,
             CompanyMemberRepository companyMemberRepository,
             UserRepository userRepository,
-            PermissionService permissionService,
+            CompanyPermissionService permissionService,
             CompanyRoleRepository companyRoleRepository,
             CompanyPermissionRepository companyPermissionRepository
     ) {
@@ -107,7 +107,7 @@ public class CompanyService {
 
         Company company = caller.getCompany();
 
-        if (permissionService.hasPermission(caller, Permission.MANAGE_COMPANY)) {
+        if (permissionService.hasPermission(caller, CompanyPermission.MANAGE_COMPANY)) {
             return new CompanyResponseDto(
                     company.getId(),
                     company.getName(),
@@ -130,7 +130,7 @@ public class CompanyService {
     public CompanyResponseDto update(AppUserDetails principal, UpdateCompanyDto dto, UUID companyId) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_COMPANY);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
 
         Company company = caller.getCompany();
         company.setName(dto.name());
@@ -154,7 +154,7 @@ public class CompanyService {
     public void delete(AppUserDetails principal, UUID companyId) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_COMPANY);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
 
         companyRepository.delete(caller.getCompany());
     }

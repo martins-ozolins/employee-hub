@@ -26,11 +26,11 @@ public class CompanyRoleDtos {
             UUID id,
             String name,
             boolean isSystem,
-            Set<PermissionDto> permissions,
+            Set<CompanyPermissionDto> permissions,
             Instant createdAt
     ) {}
 
-    public record PermissionDto(
+    public record CompanyPermissionDto(
             UUID id,
             String name,
             String description

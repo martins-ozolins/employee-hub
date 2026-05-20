@@ -29,7 +29,7 @@ public class CompanyMemberService {
     private final UserRepository userRepository;
     private final JobTitleRecordRepository jobTitleRecordRepository;
     private final SalaryRecordRepository salaryRecordRepository;
-    private final PermissionService permissionService;
+    private final CompanyPermissionService permissionService;
     private final CompanyRoleRepository companyRoleRepository;
 
     public CompanyMemberService(
@@ -37,7 +37,7 @@ public class CompanyMemberService {
             UserRepository userRepository,
             JobTitleRecordRepository jobTitleRecordRepository,
             SalaryRecordRepository salaryRecordRepository,
-            PermissionService permissionService,
+            CompanyPermissionService permissionService,
             CompanyRoleRepository companyRoleRepository
     ) {
         this.companyMemberRepository = companyMemberRepository;
@@ -52,7 +52,7 @@ public class CompanyMemberService {
     public MemberDetailDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
 
         if (companyMemberRepository.existsByPersonalEmailAndCompany(dto.personalEmail(), caller.getCompany())) {
             throw new ConflictException("A member with this email already exists in the company");
@@ -118,13 +118,13 @@ public class CompanyMemberService {
     public Page<?> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.VIEW_MEMBERS);
+        permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBERS);
 
         String normalizedSearch = (search == null || search.isBlank()) ? "" : search.trim();
 
         Page<CompanyMember> members = companyMemberRepository.searchByCompanyId(companyId, normalizedSearch, pageable);
 
-        if (permissionService.hasPermission(caller, Permission.VIEW_MEMBER_DETAILS)) {
+        if (permissionService.hasPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS)) {
             return members.map(CompanyMemberUtils::toSummaryDto);
         }
 
@@ -134,7 +134,7 @@ public class CompanyMemberService {
     public MemberDetailDto getById(UUID companyId, UUID memberId, AppUserDetails principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.VIEW_MEMBER_DETAILS);
+        permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -146,7 +146,7 @@ public class CompanyMemberService {
     public MemberDetailDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
 
         CompanyMember member = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -184,7 +184,7 @@ public class CompanyMemberService {
     public void delete(UUID companyId, UUID memberId, AppUserDetails principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
-        permissionService.checkPermission(caller, Permission.MANAGE_MEMBERS);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
 
         CompanyMember target = companyMemberRepository.findByCompanyIdAndId(companyId, memberId)
                 .orElseThrow(() -> new NotFoundException("Member not found"));
@@ -208,7 +208,7 @@ public class CompanyMemberService {
         permissionService.checkSelfServiceAccess(caller);
 
         Set<String> permissions = permissionService.getPermissions(caller).stream()
-                .map(Permission::name)
+                .map(CompanyPermission::name)
                 .collect(Collectors.toSet());
         return CompanyMemberUtils.toSelfDto(caller, permissions);
     }
@@ -228,7 +228,7 @@ public class CompanyMemberService {
         CompanyMember saved = companyMemberRepository.saveAndFlush(caller);
 
         Set<String> savedPermissions = permissionService.getPermissions(saved).stream()
-                .map(Permission::name)
+                .map(CompanyPermission::name)
                 .collect(Collectors.toSet());
         return CompanyMemberUtils.toSelfDto(saved, savedPermissions);
     }

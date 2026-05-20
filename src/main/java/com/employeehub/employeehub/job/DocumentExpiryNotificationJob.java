@@ -2,7 +2,7 @@ package com.employeehub.employeehub.job;
 
 import com.employeehub.employeehub.entity.CompanyMember;
 import com.employeehub.employeehub.entity.Document;
-import com.employeehub.employeehub.entity.Permission;
+import com.employeehub.employeehub.entity.CompanyPermission;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.DocumentRepository;
 import com.employeehub.employeehub.service.email.EmailSender;
@@ -75,7 +75,7 @@ public class DocumentExpiryNotificationJob {
 
             // Notify anyone with MANAGE_DOCUMENTS permission with a consolidated summary
             List<CompanyMember> hrMembers = companyMemberRepository.findByCompanyIdAndPermission(
-                    companyId, Permission.MANAGE_DOCUMENTS.name()
+                    companyId, CompanyPermission.MANAGE_DOCUMENTS.name()
             );
             for (CompanyMember hr : hrMembers) {
                 if (hr.getWorkEmail() != null && !hr.getWorkEmail().isBlank()) {
