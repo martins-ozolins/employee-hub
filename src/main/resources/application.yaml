@@ -20,7 +20,7 @@ spring:
 
   # PROFILES
   profiles:
-    active: ${APP_PROFILE:local}
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   # RABBITMQ
   rabbitmq:
