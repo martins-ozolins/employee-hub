@@ -46,7 +46,8 @@ public class CompanyPermissionService {
 
     public void checkSelfServiceAccess(CompanyMember caller) {
         if (!Boolean.TRUE.equals(caller.getSelfServiceEnabled())
-                || caller.getEmploymentStatus() == EmploymentStatus.TERMINATED) {
+                || caller.getEmploymentStatus() == EmploymentStatus.TERMINATED
+                || caller.getEmploymentStatus() == EmploymentStatus.SUSPENDED) {
             throw new ForbiddenException("Access denied");
         }
     }
