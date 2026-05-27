@@ -17,18 +17,6 @@ public class DocumentExpiryEmail implements EmailTemplate {
         this.body = body;
     }
 
-    public static DocumentExpiryEmail forEmployee(String firstName, List<Document> docs) {
-        StringBuilder body = new StringBuilder();
-        body.append("Hi ").append(firstName).append(",\n\n");
-        body.append("The following document(s) assigned to you will expire within 30 days:\n\n");
-        for (Document doc : docs) {
-            body.append("  - ").append(doc.getFileName())
-                .append("  (expires ").append(doc.getExpiryDate()).append(")\n");
-        }
-        body.append("\nPlease contact your HR team if renewal is needed.");
-        return new DocumentExpiryEmail("[EmployeeHub] Document(s) expiring soon", body.toString());
-    }
-
     public static DocumentExpiryEmail forHr(String companyName, Map<CompanyMember, List<Document>> docsByMember) {
         StringBuilder body = new StringBuilder();
         body.append("The following employee documents in ").append(companyName)

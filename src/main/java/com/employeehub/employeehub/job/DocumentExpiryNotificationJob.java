@@ -3,9 +3,11 @@ package com.employeehub.employeehub.job;
 import com.employeehub.employeehub.entity.CompanyMember;
 import com.employeehub.employeehub.entity.Document;
 import com.employeehub.employeehub.entity.CompanyPermission;
+import com.employeehub.employeehub.event.EmailEvent;
+import com.employeehub.employeehub.event.EmailEventPublisher;
+import com.employeehub.employeehub.event.EmailEventType;
 import com.employeehub.employeehub.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.repository.DocumentRepository;
-import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.templates.DocumentExpiryEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,14 +27,14 @@ public class DocumentExpiryNotificationJob {
 
     private final DocumentRepository documentRepository;
     private final CompanyMemberRepository companyMemberRepository;
-    private final EmailSender emailSender;
+    private final EmailEventPublisher emailEventPublisher;
 
     public DocumentExpiryNotificationJob(DocumentRepository documentRepository,
                                          CompanyMemberRepository companyMemberRepository,
-                                         EmailSender emailSender) {
+                                         EmailEventPublisher emailEventPublisher) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
-        this.emailSender = emailSender;
+        this.emailEventPublisher = emailEventPublisher;
     }
 
     @Scheduled(cron = "0 0 12 * * *")
@@ -58,31 +57,20 @@ public class DocumentExpiryNotificationJob {
             List<Document> companyDocs = companyEntry.getValue();
             String companyName = companyDocs.get(0).getCompanyMember().getCompany().getName();
 
-            // Group by member (preserving insertion order for consistent email output)
-            Map<CompanyMember, List<Document>> byMember = companyDocs.stream()
-                    .collect(Collectors.groupingBy(Document::getCompanyMember, LinkedHashMap::new, Collectors.toList()));
-
-            // Notify each affected employee
-            for (Map.Entry<CompanyMember, List<Document>> memberEntry : byMember.entrySet()) {
-                CompanyMember member = memberEntry.getKey();
-                if (member.getWorkEmail() != null && !member.getWorkEmail().isBlank()) {
-                    emailSender.send(
-                            member.getWorkEmail(),
-                            DocumentExpiryEmail.forEmployee(member.getFirstName(), memberEntry.getValue())
-                    );
-                }
-            }
-
             // Notify anyone with MANAGE_DOCUMENTS permission with a consolidated summary
             List<CompanyMember> hrMembers = companyMemberRepository.findByCompanyIdAndPermission(
                     companyId, CompanyPermission.MANAGE_DOCUMENTS.name()
             );
+            if (hrMembers.isEmpty()) continue;
+
+            Map<CompanyMember, List<Document>> byMember = companyDocs.stream()
+                    .collect(Collectors.groupingBy(Document::getCompanyMember, LinkedHashMap::new, Collectors.toList()));
+            DocumentExpiryEmail emailTemplate = DocumentExpiryEmail.forHr(companyName, byMember);
+            Map<String, String> data = Map.of("subject", emailTemplate.getSubject(), "body", emailTemplate.getBody());
+
             for (CompanyMember hr : hrMembers) {
                 if (hr.getWorkEmail() != null && !hr.getWorkEmail().isBlank()) {
-                    emailSender.send(
-                            hr.getWorkEmail(),
-                            DocumentExpiryEmail.forHr(companyName, byMember)
-                    );
+                    emailEventPublisher.publish(new EmailEvent(EmailEventType.DOCUMENT_EXPIRY_HR, hr.getWorkEmail(), data));
                 }
             }
         }

@@ -3,10 +3,7 @@ package com.employeehub.employeehub.event;
 import com.employeehub.employeehub.config.RabbitMqConfig;
 import com.employeehub.employeehub.service.email.EmailSender;
 import com.employeehub.employeehub.service.email.EmailTemplate;
-import com.employeehub.employeehub.service.email.templates.EmailVerificationEmail;
-import com.employeehub.employeehub.service.email.templates.PasswordChangedEmail;
-import com.employeehub.employeehub.service.email.templates.PasswordResetCompleteEmail;
-import com.employeehub.employeehub.service.email.templates.PasswordResetEmail;
+import com.employeehub.employeehub.service.email.templates.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -40,6 +37,7 @@ public class EmailEventListener {
                     event.getData().get("baseUrl"),
                     UUID.fromString(event.getData().get("token"))
             );
+            case DOCUMENT_EXPIRY_HR -> new PrerenderedEmail(event.getData().get("subject"), event.getData().get("body"));
         };
 
         emailSender.send(event.getRecipientEmail(), template);
