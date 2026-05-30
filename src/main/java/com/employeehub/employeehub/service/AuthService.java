@@ -86,6 +86,10 @@ public class AuthService {
 
         if (!user.getIsActive()) throw new InvalidCredentialsException();
 
+        if (!passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
         if (!user.getEmailVerified()) {
 
             UUID token = verificationTokenService.generateToken(user, TokenType.EMAIL_VERIFICATION);
@@ -96,10 +100,6 @@ public class AuthService {
             emailEventPublisher.publish(new EmailEvent(EmailEventType.EMAIL_VERIFICATION, user.getEmail(), params));
 
             throw new EmailNotVerifiedException();
-        }
-
-        if (!passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
-            throw new InvalidCredentialsException();
         }
 
         String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getId());
