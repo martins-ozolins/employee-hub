@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
@@ -57,7 +58,6 @@ public class DocumentStorageService {
     }
 
     // ── Admin methods ──
-
     @Transactional
     public DocumentDto upload(UUID companyId, UUID memberId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
 
@@ -68,6 +68,25 @@ public class DocumentStorageService {
                 .orElseThrow(() -> new NotFoundException("Member not found"));
 
         return doUpload(companyId, member, file, fileName, expiryDate);
+    }
+
+    @Transactional
+    public void delete(UUID companyId, UUID memberId, UUID docId, AppUserDetails principal) {
+
+        CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
+        permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
+
+        Document document = documentRepository.findByIdAndCompanyMemberId(docId, memberId)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        String s3Key = document.getS3Key();
+        documentRepository.delete(document);
+        documentRepository.flush();
+
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .build());
     }
 
     public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AppUserDetails principal) {
@@ -92,7 +111,6 @@ public class DocumentStorageService {
     }
 
     // ── Self-service methods ──
-
     @Transactional
     public DocumentDto uploadSelf(UUID companyId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
 

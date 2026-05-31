@@ -44,6 +44,20 @@ public class DocumentStorageController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageAndDataResponse<>("Document uploaded", document));
     }
 
+    @DeleteMapping("/{docId}")
+    public ResponseEntity<MessageResponse> deleteDocument(
+            @PathVariable UUID companyId,
+            @PathVariable UUID memberId,
+            @PathVariable UUID docId,
+            @AuthenticationPrincipal AppUserDetails principal
+    ) {
+
+        documentStorageService.delete(companyId, memberId, docId, principal);
+
+        return ResponseEntity.ok(new MessageResponse("Document deleted successfully"));
+
+    }
+
     @GetMapping("/{documentId}/download")
     public ResponseEntity<DataResponse<DocumentDownloadDto>> downloadDocument(
             @PathVariable UUID companyId,
