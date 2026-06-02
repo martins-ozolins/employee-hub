@@ -38,6 +38,7 @@ public class EmailEventListener {
                     UUID.fromString(event.getData().get("token"))
             );
             case DOCUMENT_EXPIRY_HR -> new PrerenderedEmail(event.getData().get("subject"), event.getData().get("body"));
+            case MEMBER_INVITED -> new MemberInviteEmail(event.getData().get("companyName"), event.getData().get("memberName"), event.getData().get("baseUrl"));
         };
 
         emailSender.send(event.getRecipientEmail(), template);

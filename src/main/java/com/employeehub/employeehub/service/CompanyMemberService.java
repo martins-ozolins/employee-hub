@@ -4,6 +4,9 @@ import com.employeehub.employeehub.config.AppUserDetails;
 import com.employeehub.employeehub.dto.CompanyMemberDtos.*;
 import com.employeehub.employeehub.entity.*;
 
+import com.employeehub.employeehub.event.EmailEvent;
+import com.employeehub.employeehub.event.EmailEventPublisher;
+import com.employeehub.employeehub.event.EmailEventType;
 import com.employeehub.employeehub.exception.ConflictException;
 import com.employeehub.employeehub.exception.ForbiddenException;
 import com.employeehub.employeehub.exception.NotFoundException;
@@ -13,11 +16,15 @@ import com.employeehub.employeehub.repository.JobTitleRecordRepository;
 import com.employeehub.employeehub.repository.SalaryRecordRepository;
 import com.employeehub.employeehub.repository.UserRepository;
 import com.employeehub.employeehub.util.CompanyMemberUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +38,8 @@ public class CompanyMemberService {
     private final SalaryRecordRepository salaryRecordRepository;
     private final CompanyPermissionService permissionService;
     private final CompanyRoleRepository companyRoleRepository;
+    private final EmailEventPublisher emailEventPublisher;
+    private final String baseUrl ;
 
     public CompanyMemberService(
             CompanyMemberRepository companyMemberRepository,
@@ -38,7 +47,8 @@ public class CompanyMemberService {
             JobTitleRecordRepository jobTitleRecordRepository,
             SalaryRecordRepository salaryRecordRepository,
             CompanyPermissionService permissionService,
-            CompanyRoleRepository companyRoleRepository
+            CompanyRoleRepository companyRoleRepository, EmailEventPublisher emailEventPublisher,
+            @Value("${app.base-url}") String baseUrl
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.userRepository = userRepository;
@@ -46,6 +56,8 @@ public class CompanyMemberService {
         this.salaryRecordRepository = salaryRecordRepository;
         this.permissionService = permissionService;
         this.companyRoleRepository = companyRoleRepository;
+        this.emailEventPublisher = emailEventPublisher;
+        this.baseUrl = baseUrl;
     }
 
     @Transactional
@@ -88,6 +100,16 @@ public class CompanyMemberService {
                 .build();
 
         CompanyMember saved = companyMemberRepository.saveAndFlush(newMember);
+
+        if (dto.selfServiceEnabled()) {
+            saved.setInvitedAt(Instant.now());
+            companyMemberRepository.save(saved);
+            Map<String, String> data = new HashMap<>();
+            data.put("companyName", saved.getCompany().getName());
+            data.put("memberName", saved.getFirstName());
+            data.put("baseUrl", baseUrl);
+            emailEventPublisher.publish(new EmailEvent(EmailEventType.MEMBER_INVITED, saved.getPersonalEmail(), data));
+        }
 
         if (dto.jobTitle() != null && !dto.jobTitle().isBlank()) {
             JobTitleRecord initialRecord = JobTitleRecord.builder()
@@ -156,6 +178,11 @@ public class CompanyMemberService {
             throw new ConflictException("A member with this email already exists in the company");
         }
 
+        boolean emailChanged = !member.getPersonalEmail().equals(dto.personalEmail());
+        if (emailChanged) {
+            member.setInvitedAt(null);
+        }
+
         member.setFirstName(dto.firstName());
         member.setLastName(dto.lastName());
         member.setMiddleName(dto.middleName());
@@ -177,6 +204,16 @@ public class CompanyMemberService {
         member.setEmergencyContactPhone(dto.emergencyContactPhone());
 
         CompanyMember saved = companyMemberRepository.saveAndFlush(member);
+
+        if (dto.selfServiceEnabled() && saved.getInvitedAt() == null) {
+            saved.setInvitedAt(Instant.now());
+            companyMemberRepository.save(saved);
+            Map<String, String> data = new HashMap<>();
+            data.put("companyName", saved.getCompany().getName());
+            data.put("memberName", saved.getFirstName());
+            data.put("baseUrl", baseUrl);
+            emailEventPublisher.publish(new EmailEvent(EmailEventType.MEMBER_INVITED, saved.getPersonalEmail(), data));
+        }
 
         return CompanyMemberUtils.toDetailDto(saved);
     }
@@ -201,6 +238,7 @@ public class CompanyMemberService {
 
         companyMemberRepository.delete(target);
     }
+
 
     public MemberSelfResponseDto getSelf(UUID companyId, AppUserDetails principal) {
 
@@ -232,4 +270,5 @@ public class CompanyMemberService {
                 .collect(Collectors.toSet());
         return CompanyMemberUtils.toSelfDto(saved, savedPermissions);
     }
+
 }

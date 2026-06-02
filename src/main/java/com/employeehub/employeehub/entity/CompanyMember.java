@@ -100,6 +100,9 @@ public class CompanyMember {
     @Column(name = "emergency_contact_phone", length = 50)
     private String emergencyContactPhone;
 
+    @Column(name = "invited_at")
+    private Instant invitedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

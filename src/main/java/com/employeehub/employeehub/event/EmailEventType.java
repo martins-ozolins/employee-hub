@@ -6,4 +6,5 @@ public enum EmailEventType {
     PASSWORD_RESET,
     PASSWORD_RESET_REQUESTED,
     DOCUMENT_EXPIRY_HR,
+    MEMBER_INVITED
 }

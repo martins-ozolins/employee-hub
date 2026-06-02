@@ -1,0 +1,2 @@
+ALTER TABLE company_members
+ADD COLUMN invited_at TIMESTAMPTZ NULL;
