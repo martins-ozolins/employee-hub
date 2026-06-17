@@ -1,12 +1,12 @@
 package com.employeehub.employeehub.service;
 
 
+import com.employeehub.employeehub.config.JwtProperties;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -23,16 +23,11 @@ public class JwtService {
     private final long refreshSeconds;
     private final String issuer;
 
-
-    public JwtService(@Value("${app.jwt.secret}") String secret,
-                      @Value("${app.jwt.accessSeconds}")long accessSeconds,
-                      @Value("${app.jwt.refreshSeconds}")long refreshSeconds,
-                      @Value("${app.jwt.issuer}")String issuer)
-    {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessSeconds = accessSeconds;
-        this.refreshSeconds = refreshSeconds;
-        this.issuer = issuer;
+    public JwtService(JwtProperties jwtProperties) {
+        this.key = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+        this.accessSeconds = jwtProperties.accessSeconds();
+        this.refreshSeconds = jwtProperties.refreshSeconds();
+        this.issuer = jwtProperties.issuer();
     }
 
     /** Create a short-lived access token */

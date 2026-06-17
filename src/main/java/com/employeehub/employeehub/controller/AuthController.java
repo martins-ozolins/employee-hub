@@ -2,6 +2,7 @@ package com.employeehub.employeehub.controller;
 
 
 import com.employeehub.employeehub.config.AppUserDetails;
+import com.employeehub.employeehub.config.JwtProperties;
 import com.employeehub.employeehub.dto.ApiResponses.*;
 import com.employeehub.employeehub.dto.AuthDtos.*;
 import com.employeehub.employeehub.service.AuthService;
@@ -9,7 +10,6 @@ import com.employeehub.employeehub.util.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,14 +25,10 @@ public class AuthController {
     private final String accessCookieName;
     private final String refreshCookieName;
 
-    public AuthController(
-            AuthService authService,
-            @Value("${app.jwt.accessCookieName}") String accessCookieName,
-            @Value("${app.jwt.refreshCookieName}") String refreshCookieName
-    ) {
+    public AuthController(AuthService authService, JwtProperties jwtProperties) {
         this.authService = authService;
-        this.accessCookieName = accessCookieName;
-        this.refreshCookieName = refreshCookieName;
+        this.accessCookieName = jwtProperties.accessCookieName();
+        this.refreshCookieName = jwtProperties.refreshCookieName();
     }
 
     @PostMapping("/register")

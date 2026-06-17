@@ -1,5 +1,6 @@
 package com.employeehub.employeehub.security;
 
+import com.employeehub.employeehub.config.JwtProperties;
 import com.employeehub.employeehub.dto.AuthDtos;
 import com.employeehub.employeehub.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -7,10 +8,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -29,11 +28,11 @@ public class JwtCookieAuthFilter extends OncePerRequestFilter {
     public JwtCookieAuthFilter(
             JwtService jwtService,
             UserDetailsService userDetailsService,
-            @Value("${app.jwt.accessCookieName}") String cookieName
+            JwtProperties jwtProperties
     ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.cookieName = cookieName;
+        this.cookieName = jwtProperties.accessCookieName();
     }
 
     @Override
