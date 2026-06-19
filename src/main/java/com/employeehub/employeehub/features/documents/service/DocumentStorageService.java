@@ -6,6 +6,7 @@ import com.employeehub.employeehub.features.documents.repository.DocumentReposit
 import com.employeehub.employeehub.features.documents.util.DocumentUtils;
 import com.employeehub.employeehub.features.members.entity.CompanyMember;
 import com.employeehub.employeehub.features.members.repository.CompanyMemberRepository;
+import com.employeehub.employeehub.config.S3Properties;
 import com.employeehub.employeehub.features.roles.entity.CompanyPermission;
 import com.employeehub.employeehub.features.roles.service.CompanyPermissionService;
 import com.employeehub.employeehub.security.model.AppUserDetails;
@@ -44,13 +45,13 @@ public class DocumentStorageService {
     private final List<String> allowedContentTypes;
     private final CompanyPermissionService permissionService;
 
-    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, @Value("${aws.s3.bucket}") String bucketName, @Value("${aws.s3.presignExpireMinutes}") int presignExpireMinutes, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, CompanyPermissionService permissionService) {
+    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, S3Properties s3Properties, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, CompanyPermissionService permissionService) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
-        this.bucketName = bucketName;
-        this.presignExpireMinutes = presignExpireMinutes;
+        this.bucketName = s3Properties.bucket();
+        this.presignExpireMinutes = s3Properties.presignExpireMinutes();
         this.maxSizeBytes = maxSizeBytes;
         this.allowedContentTypes = allowedContentTypes;
         this.permissionService = permissionService;
