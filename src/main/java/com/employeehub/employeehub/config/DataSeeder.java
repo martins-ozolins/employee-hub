@@ -1,7 +1,22 @@
 package com.employeehub.employeehub.config;
 
-import com.employeehub.employeehub.entity.*;
-import com.employeehub.employeehub.repository.*;
+import com.employeehub.employeehub.features.auth.entity.PlatformRole;
+import com.employeehub.employeehub.features.auth.entity.User;
+import com.employeehub.employeehub.features.auth.repository.UserRepository;
+import com.employeehub.employeehub.features.company.entity.Company;
+import com.employeehub.employeehub.features.company.repository.CompanyRepository;
+import com.employeehub.employeehub.features.members.entity.CompanyMember;
+import com.employeehub.employeehub.features.members.entity.EmploymentStatus;
+import com.employeehub.employeehub.features.members.entity.JobTitleRecord;
+import com.employeehub.employeehub.features.members.entity.SalaryRecord;
+import com.employeehub.employeehub.features.members.entity.TitleChangeType;
+import com.employeehub.employeehub.features.members.repository.CompanyMemberRepository;
+import com.employeehub.employeehub.features.members.repository.JobTitleRecordRepository;
+import com.employeehub.employeehub.features.members.repository.SalaryRecordRepository;
+import com.employeehub.employeehub.features.roles.entity.CompanyPermissionEntity;
+import com.employeehub.employeehub.features.roles.entity.CompanyRoleEntity;
+import com.employeehub.employeehub.features.roles.repository.CompanyPermissionRepository;
+import com.employeehub.employeehub.features.roles.repository.CompanyRoleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
