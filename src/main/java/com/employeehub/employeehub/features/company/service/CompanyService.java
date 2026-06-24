@@ -13,7 +13,7 @@ import com.employeehub.employeehub.features.roles.entity.CompanyRoleEntity;
 import com.employeehub.employeehub.features.roles.repository.CompanyPermissionRepository;
 import com.employeehub.employeehub.features.roles.repository.CompanyRoleRepository;
 import com.employeehub.employeehub.features.roles.service.CompanyPermissionService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +48,8 @@ public class CompanyService {
     }
 
     @Transactional
-    public CompanyResponseDto create(AppUserDetails principal, CreateCompanyDto dto) {
-        User user = userRepository.findById(principal.getId())
+    public CompanyResponseDto create(AuthenticatedUser principal, CreateCompanyDto dto) {
+        User user = userRepository.findById(principal.id())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         Company company = Company.builder()
@@ -93,8 +93,8 @@ public class CompanyService {
         );
     }
 
-    public List<CompanyResponseDto> getUserCompanies(AppUserDetails principal) {
-        return companyMemberRepository.findCompaniesByUserId(principal.getId())
+    public List<CompanyResponseDto> getUserCompanies(AuthenticatedUser principal) {
+        return companyMemberRepository.findCompaniesByUserId(principal.id())
                 .stream()
                 .map(company -> new CompanyResponseDto(
                         company.getId(),
@@ -107,7 +107,7 @@ public class CompanyService {
                 .toList();
     }
 
-    public Object getById(AppUserDetails principal, UUID companyId) {
+    public Object getById(AuthenticatedUser principal, UUID companyId) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
 
@@ -133,7 +133,7 @@ public class CompanyService {
     }
 
     @Transactional
-    public CompanyResponseDto update(AppUserDetails principal, UpdateCompanyDto dto, UUID companyId) {
+    public CompanyResponseDto update(AuthenticatedUser principal, UpdateCompanyDto dto, UUID companyId) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
@@ -157,7 +157,7 @@ public class CompanyService {
     }
 
     @Transactional
-    public void delete(AppUserDetails principal, UUID companyId) {
+    public void delete(AuthenticatedUser principal, UUID companyId) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);

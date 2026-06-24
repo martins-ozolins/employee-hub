@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.roles.controller;
 
 import com.employeehub.employeehub.features.roles.dto.CompanyRoleDtos.*;
 import com.employeehub.employeehub.features.roles.service.CompanyRoleService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +25,7 @@ public class CompanyRoleController {
     @GetMapping
     PagedDataResponse<RoleResponseDto> getCompanyRoles(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
@@ -36,7 +36,7 @@ public class CompanyRoleController {
     @ResponseStatus(HttpStatus.CREATED)
     RoleResponseDto createRole(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestBody @Valid CreateRoleDto dto
     ) {
         return companyRoleService.createRole(id, principal, dto);
@@ -46,7 +46,7 @@ public class CompanyRoleController {
     RoleResponseDto updateRole(
             @PathVariable UUID id,
             @PathVariable UUID roleId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestBody @Valid UpdateRoleDto dto
     ) {
         return companyRoleService.updateRole(id, roleId, principal, dto);
@@ -57,7 +57,7 @@ public class CompanyRoleController {
     void deleteRole(
             @PathVariable UUID id,
             @PathVariable UUID roleId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         companyRoleService.deleteRole(id, roleId, principal);
     }

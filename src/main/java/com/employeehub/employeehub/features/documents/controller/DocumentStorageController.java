@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.documents.controller;
 
 import com.employeehub.employeehub.features.documents.dto.DocumentDtos.*;
 import com.employeehub.employeehub.features.documents.service.DocumentStorageService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +29,7 @@ public class DocumentStorageController {
     public ResponseEntity<MessageAndDataResponse<DocumentDto>> uploadDocument(
             @PathVariable UUID companyId,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "fileName") String fileName,
             @RequestParam(value = "expiryDate", required = false) LocalDate expiryDate
@@ -45,7 +45,7 @@ public class DocumentStorageController {
             @PathVariable UUID companyId,
             @PathVariable UUID memberId,
             @PathVariable UUID docId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
 
         documentStorageService.delete(companyId, memberId, docId, principal);
@@ -59,7 +59,7 @@ public class DocumentStorageController {
             @PathVariable UUID companyId,
             @PathVariable UUID memberId,
             @PathVariable UUID documentId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
 
         DocumentDownloadDto download = documentStorageService.download(companyId, memberId, documentId, principal);
@@ -71,7 +71,7 @@ public class DocumentStorageController {
     public ResponseEntity<PagedDataResponse<DocumentDto>> listDocuments(
             @PathVariable UUID companyId,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             Pageable pageable
     ) {
 

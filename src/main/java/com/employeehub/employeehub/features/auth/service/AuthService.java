@@ -12,7 +12,7 @@ import com.employeehub.employeehub.features.email.event.EmailEventPublisher;
 import com.employeehub.employeehub.features.email.event.EmailEventType;
 import com.employeehub.employeehub.features.members.entity.CompanyMember;
 import com.employeehub.employeehub.features.members.repository.CompanyMemberRepository;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.security.service.JwtService;
 import com.employeehub.employeehub.shared.exception.BadRequestException;
 import com.employeehub.employeehub.shared.exception.EmailAlreadyUsedException;
@@ -106,8 +106,8 @@ public class AuthService {
             throw new EmailNotVerifiedException();
         }
 
-        String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getId());
-        RefreshTokenResult refreshTokenResult = jwtService.generateRefreshToken(user.getEmail(), user.getId());
+        String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getId(), user.getRole().name());
+        RefreshTokenResult refreshTokenResult = jwtService.generateRefreshToken(user.getEmail(), user.getId(), user.getRole().name());
 
         RefreshToken entity = new RefreshToken();
         entity.setJti(refreshTokenResult.jti());
@@ -151,8 +151,8 @@ public class AuthService {
 
         // issue new token pair
         User owner = refreshToken.getOwner();
-        String newAccessToken = jwtService.generateAccessToken(owner.getEmail(), owner.getId());
-        RefreshTokenResult newRefreshResult = jwtService.generateRefreshToken(owner.getEmail(), owner.getId());
+        String newAccessToken = jwtService.generateAccessToken(owner.getEmail(), owner.getId(), owner.getRole().name());
+        RefreshTokenResult newRefreshResult = jwtService.generateRefreshToken(owner.getEmail(), owner.getId(), owner.getRole().name());
 
         RefreshToken newEntity = new RefreshToken();
         newEntity.setJti(newRefreshResult.jti());
@@ -198,9 +198,9 @@ public class AuthService {
 
     }
 
-    public void changePassword(AppUserDetails principal, @Valid ChangePasswordDto dto) {
+    public void changePassword(AuthenticatedUser principal, @Valid ChangePasswordDto dto) {
 
-        User user = userRepository.findById(principal.getId()).orElseThrow(() -> new InvalidCredentialsException());
+        User user = userRepository.findById(principal.id()).orElseThrow(() -> new InvalidCredentialsException());
 
         if (!passwordEncoder.matches(dto.currentPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Current password does not match.");

@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.members.controller;
 
 import com.employeehub.employeehub.features.members.dto.JobTitleDtos.*;
 import com.employeehub.employeehub.features.members.service.JobTitleService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -28,7 +28,7 @@ public class JobTitleController {
     public ResponseEntity<DataResponse<JobTitleRecordDto>> add(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody AddJobTitleDto dto
     ) {
         JobTitleRecordDto record = jobTitleService.add(id, memberId, principal, dto);
@@ -39,7 +39,7 @@ public class JobTitleController {
     public ResponseEntity<PagedDataResponse<JobTitleRecordDto>> getHistory(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             Pageable pageable
     ) {
         Page<JobTitleRecordDto> page = jobTitleService.getHistory(id, memberId, principal, pageable);

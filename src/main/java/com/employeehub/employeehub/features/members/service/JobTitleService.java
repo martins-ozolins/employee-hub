@@ -8,7 +8,7 @@ import com.employeehub.employeehub.features.members.repository.JobTitleRecordRep
 import com.employeehub.employeehub.features.members.util.JobTitleUtils;
 import com.employeehub.employeehub.features.roles.entity.CompanyPermission;
 import com.employeehub.employeehub.features.roles.service.CompanyPermissionService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +35,7 @@ public class JobTitleService {
     }
 
     @Transactional
-    public JobTitleRecordDto add(UUID companyId, UUID memberId, AppUserDetails principal, AddJobTitleDto dto) {
+    public JobTitleRecordDto add(UUID companyId, UUID memberId, AuthenticatedUser principal, AddJobTitleDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_JOB_TITLES);
@@ -59,7 +59,7 @@ public class JobTitleService {
         return JobTitleUtils.toDto(saved);
     }
 
-    public Page<JobTitleRecordDto> getHistory(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
+    public Page<JobTitleRecordDto> getHistory(UUID companyId, UUID memberId, AuthenticatedUser principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS);

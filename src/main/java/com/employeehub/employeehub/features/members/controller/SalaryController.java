@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.members.controller;
 
 import com.employeehub.employeehub.features.members.dto.SalaryDtos.*;
 import com.employeehub.employeehub.features.members.service.SalaryService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -28,7 +28,7 @@ public class SalaryController {
     public ResponseEntity<DataResponse<SalaryRecordDto>> add(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody AddSalaryDto dto
     ) {
         SalaryRecordDto record = salaryService.add(id, memberId, principal, dto);
@@ -39,7 +39,7 @@ public class SalaryController {
     public ResponseEntity<PagedDataResponse<SalaryRecordDto>> getHistory(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             Pageable pageable
     ) {
         Page<SalaryRecordDto> page = salaryService.getHistory(id, memberId, principal, pageable);

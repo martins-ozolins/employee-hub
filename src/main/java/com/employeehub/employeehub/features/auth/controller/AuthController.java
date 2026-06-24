@@ -3,7 +3,7 @@ package com.employeehub.employeehub.features.auth.controller;
 import com.employeehub.employeehub.config.JwtProperties;
 import com.employeehub.employeehub.features.auth.dto.AuthDtos.*;
 import com.employeehub.employeehub.features.auth.service.AuthService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import com.employeehub.employeehub.shared.util.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -87,7 +87,7 @@ public class AuthController {
     }
 
     @PostMapping("change-password")
-    public ResponseEntity<MessageResponse> changePassword(@AuthenticationPrincipal AppUserDetails principal, @RequestBody @Valid ChangePasswordDto dto) {
+    public ResponseEntity<MessageResponse> changePassword(@AuthenticationPrincipal AuthenticatedUser principal, @RequestBody @Valid ChangePasswordDto dto) {
         authService.changePassword(principal, dto);
 
         return ResponseEntity.status(HttpStatus.OK).body(new MessageResponse("Password changed successfully."));

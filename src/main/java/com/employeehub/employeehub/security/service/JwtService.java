@@ -30,7 +30,7 @@ public class JwtService {
     }
 
     /** Create a short-lived access token */
-    public String generateAccessToken(String email, UUID id) {
+    public String generateAccessToken(String email, UUID id, String role) {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(accessSeconds);
 
@@ -39,6 +39,7 @@ public class JwtService {
                 .subject(email) // subject = user identity
                 .claim("userId", id.toString())
                 .claim("jti", UUID.randomUUID().toString())
+                .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key) // HS256 auto-chosen based on key type
@@ -46,7 +47,7 @@ public class JwtService {
     }
 
     /** Create a long-lived refresh token */
-    public RefreshTokenResult generateRefreshToken(String email, UUID userId) {
+    public RefreshTokenResult generateRefreshToken(String email, UUID userId, String role) {
         UUID jti = UUID.randomUUID();
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(refreshSeconds);
@@ -56,6 +57,7 @@ public class JwtService {
                 .subject(email)
                 .claim("userId", userId.toString())
                 .claim("jti", jti.toString())
+                .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)
@@ -74,8 +76,9 @@ public class JwtService {
         String email = payload.getSubject();
         UUID userId = UUID.fromString(payload.get("userId", String.class));
         UUID jti = UUID.fromString(payload.get("jti", String.class));
+        String role = payload.get("role", String.class);
 
-        return new JwtClaims(email, userId, jti);
+        return new JwtClaims(email, userId, jti, role);
     }
 
 }

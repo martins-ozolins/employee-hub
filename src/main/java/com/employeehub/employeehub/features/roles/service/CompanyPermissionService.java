@@ -4,7 +4,7 @@ import com.employeehub.employeehub.features.members.entity.CompanyMember;
 import com.employeehub.employeehub.features.members.entity.EmploymentStatus;
 import com.employeehub.employeehub.features.members.repository.CompanyMemberRepository;
 import com.employeehub.employeehub.features.roles.entity.CompanyPermission;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.ForbiddenException;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +21,9 @@ public class CompanyPermissionService {
         this.companyMemberRepository = companyMemberRepository;
     }
 
-    public CompanyMember getCallerOrThrow(AppUserDetails principal, UUID companyId) {
+    public CompanyMember getCallerOrThrow(AuthenticatedUser principal, UUID companyId) {
         return companyMemberRepository
-                .findByUserIdAndCompanyId(principal.getId(), companyId)
+                .findByUserIdAndCompanyId(principal.id(), companyId)
                 .orElseThrow(() -> new ForbiddenException("Access denied"));
     }
 

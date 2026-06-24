@@ -21,7 +21,7 @@ public class AuthDtos {
             @NotBlank String password
     ) {}
 
-    public record JwtClaims(String email, UUID userId, UUID jti){}
+    public record JwtClaims(String email, UUID userId, UUID jti, String role){}
 
     public record RefreshTokenResult(String token, UUID jti, Instant expiresAt) { }
 

@@ -8,7 +8,7 @@ import com.employeehub.employeehub.features.members.repository.SalaryRecordRepos
 import com.employeehub.employeehub.features.members.util.SalaryUtils;
 import com.employeehub.employeehub.features.roles.entity.CompanyPermission;
 import com.employeehub.employeehub.features.roles.service.CompanyPermissionService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +35,7 @@ public class SalaryService {
     }
 
     @Transactional
-    public SalaryRecordDto add(UUID companyId, UUID memberId, AppUserDetails principal, AddSalaryDto dto) {
+    public SalaryRecordDto add(UUID companyId, UUID memberId, AuthenticatedUser principal, AddSalaryDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_SALARY);
@@ -60,7 +60,7 @@ public class SalaryService {
         return SalaryUtils.toDto(saved);
     }
 
-    public Page<SalaryRecordDto> getHistory(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
+    public Page<SalaryRecordDto> getHistory(UUID companyId, UUID memberId, AuthenticatedUser principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS);

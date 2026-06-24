@@ -9,7 +9,7 @@ import com.employeehub.employeehub.features.roles.entity.CompanyRoleEntity;
 import com.employeehub.employeehub.features.roles.repository.CompanyPermissionRepository;
 import com.employeehub.employeehub.features.roles.repository.CompanyRoleRepository;
 import com.employeehub.employeehub.features.roles.util.CompanyRoleUtils;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import com.employeehub.employeehub.shared.exception.BadRequestException;
 import com.employeehub.employeehub.shared.exception.ConflictException;
@@ -39,7 +39,7 @@ public class CompanyRoleService {
         this.permissionService = permissionService;
     }
 
-    public PagedDataResponse<RoleResponseDto> getCompanyRoles(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
+    public PagedDataResponse<RoleResponseDto> getCompanyRoles(UUID companyId, AuthenticatedUser principal, String search, Pageable pageable) {
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBERS);
 
@@ -52,7 +52,7 @@ public class CompanyRoleService {
     }
 
     @Transactional
-    public RoleResponseDto createRole(UUID companyId, AppUserDetails principal, CreateRoleDto dto) {
+    public RoleResponseDto createRole(UUID companyId, AuthenticatedUser principal, CreateRoleDto dto) {
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
 
@@ -75,7 +75,7 @@ public class CompanyRoleService {
     }
 
     @Transactional
-    public RoleResponseDto updateRole(UUID companyId, UUID roleId, AppUserDetails principal, UpdateRoleDto dto) {
+    public RoleResponseDto updateRole(UUID companyId, UUID roleId, AuthenticatedUser principal, UpdateRoleDto dto) {
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
 
@@ -97,7 +97,7 @@ public class CompanyRoleService {
     }
 
     @Transactional
-    public void deleteRole(UUID companyId, UUID roleId, AppUserDetails principal) {
+    public void deleteRole(UUID companyId, UUID roleId, AuthenticatedUser principal) {
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_COMPANY);
 

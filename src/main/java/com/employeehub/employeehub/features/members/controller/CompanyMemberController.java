@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.members.controller;
 
 import com.employeehub.employeehub.features.members.dto.CompanyMemberDtos.*;
 import com.employeehub.employeehub.features.members.service.CompanyMemberService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -27,7 +27,7 @@ public class CompanyMemberController {
     @GetMapping
     public ResponseEntity<PagedDataResponse<?>> getAllCompanyMembers(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) String search,
             Pageable pageable
     ) {
@@ -50,7 +50,7 @@ public class CompanyMemberController {
     public ResponseEntity<DataResponse<MemberDetailDto>> getById(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         MemberDetailDto dto = companyMemberService.getById(id, memberId, principal);
         return ResponseEntity.ok(new DataResponse<>(dto));
@@ -59,7 +59,7 @@ public class CompanyMemberController {
     @PostMapping
     public ResponseEntity<DataResponse<MemberDetailDto>> create(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody CreateMemberDto dto
     ) {
         MemberDetailDto memberDetailDto = companyMemberService.create(id, principal, dto);
@@ -70,7 +70,7 @@ public class CompanyMemberController {
     public ResponseEntity<DataResponse<MemberDetailDto>> update(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody UpdateMemberDto dto
     ) {
         MemberDetailDto memberDetailDto = companyMemberService.update(id, memberId, principal, dto);
@@ -81,7 +81,7 @@ public class CompanyMemberController {
     public ResponseEntity<MessageResponse> delete(
             @PathVariable UUID id,
             @PathVariable UUID memberId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         companyMemberService.delete(id, memberId, principal);
         return ResponseEntity.ok(new MessageResponse("Member deleted successfully"));

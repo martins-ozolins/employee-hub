@@ -2,7 +2,7 @@ package com.employeehub.employeehub.features.company.controller;
 
 import com.employeehub.employeehub.features.company.dto.CompanyDtos.*;
 import com.employeehub.employeehub.features.company.service.CompanyService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class CompanyController {
     // CREATE COMPANY
     @PostMapping
     public ResponseEntity<MessageAndDataResponse<CompanyResponseDto>> create(
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestBody CreateCompanyDto dto
     ) {
         CompanyResponseDto company = companyService.create(principal, dto);
@@ -35,7 +35,7 @@ public class CompanyController {
     // GET COMPANIES (via CompanyMember)
     @GetMapping
     public ResponseEntity<DataResponse<List<CompanyResponseDto>>> getUserCompanies(
-            @AuthenticationPrincipal AppUserDetails principal)
+            @AuthenticationPrincipal AuthenticatedUser principal)
     {
         List<CompanyResponseDto> companies = companyService.getUserCompanies(principal);
 
@@ -45,7 +45,7 @@ public class CompanyController {
     // GET COMPANY BY ID (basic or full based on role)
     @GetMapping("/{id}")
     public ResponseEntity<DataResponse<?>> getById(
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable UUID id
     ) {
         Object company = companyService.getById(principal, id);
@@ -55,7 +55,7 @@ public class CompanyController {
     // UPDATE COMPANY
     @PutMapping("/{id}")
     public ResponseEntity<MessageAndDataResponse<CompanyResponseDto>> update(
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestBody UpdateCompanyDto dto,
             @PathVariable UUID id
     ) {
@@ -66,7 +66,7 @@ public class CompanyController {
     // DELETE COMPANY
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> delete(
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable UUID id
     ) {
         companyService.delete(principal, id);

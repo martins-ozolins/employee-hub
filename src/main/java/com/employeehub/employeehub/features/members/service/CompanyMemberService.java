@@ -15,7 +15,7 @@ import com.employeehub.employeehub.features.members.repository.CompanyMemberRepo
 import com.employeehub.employeehub.features.members.repository.JobTitleRecordRepository;
 import com.employeehub.employeehub.features.members.repository.SalaryRecordRepository;
 import com.employeehub.employeehub.features.members.util.CompanyMemberUtils;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.ConflictException;
 import com.employeehub.employeehub.shared.exception.ForbiddenException;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
@@ -65,7 +65,7 @@ public class CompanyMemberService {
     }
 
     @Transactional
-    public MemberDetailDto create(UUID companyId, AppUserDetails principal, CreateMemberDto dto) {
+    public MemberDetailDto create(UUID companyId, AuthenticatedUser principal, CreateMemberDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
@@ -141,7 +141,7 @@ public class CompanyMemberService {
         return CompanyMemberUtils.toDetailDto(saved);
     }
 
-    public Page<?> getAllCompanyMembers(UUID companyId, AppUserDetails principal, String search, Pageable pageable) {
+    public Page<?> getAllCompanyMembers(UUID companyId, AuthenticatedUser principal, String search, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBERS);
@@ -157,7 +157,7 @@ public class CompanyMemberService {
         return members.map(CompanyMemberUtils::toDirectoryDto);
     }
 
-    public MemberDetailDto getById(UUID companyId, UUID memberId, AppUserDetails principal) {
+    public MemberDetailDto getById(UUID companyId, UUID memberId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.VIEW_MEMBER_DETAILS);
@@ -169,7 +169,7 @@ public class CompanyMemberService {
     }
 
     @Transactional
-    public MemberDetailDto update(UUID companyId, UUID memberId, AppUserDetails principal, UpdateMemberDto dto) {
+    public MemberDetailDto update(UUID companyId, UUID memberId, AuthenticatedUser principal, UpdateMemberDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
@@ -222,7 +222,7 @@ public class CompanyMemberService {
         return CompanyMemberUtils.toDetailDto(saved);
     }
 
-    public void delete(UUID companyId, UUID memberId, AppUserDetails principal) {
+    public void delete(UUID companyId, UUID memberId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_MEMBERS);
@@ -244,7 +244,7 @@ public class CompanyMemberService {
     }
 
 
-    public MemberSelfResponseDto getSelf(UUID companyId, AppUserDetails principal) {
+    public MemberSelfResponseDto getSelf(UUID companyId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkSelfServiceAccess(caller);
@@ -256,7 +256,7 @@ public class CompanyMemberService {
     }
 
     @Transactional
-    public MemberSelfResponseDto updateSelf(UUID companyId, AppUserDetails principal, MemberSelfUpdateDto dto) {
+    public MemberSelfResponseDto updateSelf(UUID companyId, AuthenticatedUser principal, MemberSelfUpdateDto dto) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkSelfServiceAccess(caller);

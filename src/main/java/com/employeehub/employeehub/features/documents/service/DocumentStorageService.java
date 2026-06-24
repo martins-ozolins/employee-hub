@@ -9,7 +9,7 @@ import com.employeehub.employeehub.features.members.repository.CompanyMemberRepo
 import com.employeehub.employeehub.config.S3Properties;
 import com.employeehub.employeehub.features.roles.entity.CompanyPermission;
 import com.employeehub.employeehub.features.roles.service.CompanyPermissionService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.BadRequestException;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,7 +59,7 @@ public class DocumentStorageService {
 
     // ── Admin methods ──
     @Transactional
-    public DocumentDto upload(UUID companyId, UUID memberId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
+    public DocumentDto upload(UUID companyId, UUID memberId, AuthenticatedUser principal, MultipartFile file, String fileName, LocalDate expiryDate) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
@@ -71,7 +71,7 @@ public class DocumentStorageService {
     }
 
     @Transactional
-    public void delete(UUID companyId, UUID memberId, UUID docId, AppUserDetails principal) {
+    public void delete(UUID companyId, UUID memberId, UUID docId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
@@ -89,7 +89,7 @@ public class DocumentStorageService {
                 .build());
     }
 
-    public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AppUserDetails principal) {
+    public DocumentDownloadDto download(UUID companyId, UUID memberId, UUID documentId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
@@ -97,7 +97,7 @@ public class DocumentStorageService {
         return doDownload(memberId, documentId);
     }
 
-    public Page<DocumentDto> list(UUID companyId, UUID memberId, AppUserDetails principal, Pageable pageable) {
+    public Page<DocumentDto> list(UUID companyId, UUID memberId, AuthenticatedUser principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkPermission(caller, CompanyPermission.MANAGE_DOCUMENTS);
@@ -112,7 +112,7 @@ public class DocumentStorageService {
 
     // ── Self-service methods ──
     @Transactional
-    public DocumentDto uploadSelf(UUID companyId, AppUserDetails principal, MultipartFile file, String fileName, LocalDate expiryDate) {
+    public DocumentDto uploadSelf(UUID companyId, AuthenticatedUser principal, MultipartFile file, String fileName, LocalDate expiryDate) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkSelfServiceAccess(caller);
@@ -120,7 +120,7 @@ public class DocumentStorageService {
         return doUpload(companyId, caller, file, fileName, expiryDate);
     }
 
-    public DocumentDownloadDto downloadSelf(UUID companyId, UUID documentId, AppUserDetails principal) {
+    public DocumentDownloadDto downloadSelf(UUID companyId, UUID documentId, AuthenticatedUser principal) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkSelfServiceAccess(caller);
@@ -128,7 +128,7 @@ public class DocumentStorageService {
         return doDownload(caller.getId(), documentId);
     }
 
-    public Page<DocumentDto> listSelf(UUID companyId, AppUserDetails principal, Pageable pageable) {
+    public Page<DocumentDto> listSelf(UUID companyId, AuthenticatedUser principal, Pageable pageable) {
 
         CompanyMember caller = permissionService.getCallerOrThrow(principal, companyId);
         permissionService.checkSelfServiceAccess(caller);

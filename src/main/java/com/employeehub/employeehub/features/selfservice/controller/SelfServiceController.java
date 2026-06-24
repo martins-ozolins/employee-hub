@@ -4,7 +4,7 @@ import com.employeehub.employeehub.features.documents.dto.DocumentDtos.*;
 import com.employeehub.employeehub.features.documents.service.DocumentStorageService;
 import com.employeehub.employeehub.features.members.dto.CompanyMemberDtos.*;
 import com.employeehub.employeehub.features.members.service.CompanyMemberService;
-import com.employeehub.employeehub.security.model.AppUserDetails;
+import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.dto.ApiResponses.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,7 @@ public class SelfServiceController {
     @GetMapping
     public ResponseEntity<DataResponse<MemberSelfResponseDto>> getSelf(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         MemberSelfResponseDto dto = companyMemberService.getSelf(id, principal);
         return ResponseEntity.ok(new DataResponse<>(dto));
@@ -42,7 +42,7 @@ public class SelfServiceController {
     @PutMapping
     public ResponseEntity<DataResponse<MemberSelfResponseDto>> updateSelf(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody MemberSelfUpdateDto dto
     ) {
         MemberSelfResponseDto updated = companyMemberService.updateSelf(id, principal, dto);
@@ -52,7 +52,7 @@ public class SelfServiceController {
     @GetMapping("/documents")
     public ResponseEntity<PagedDataResponse<DocumentDto>> listDocuments(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             Pageable pageable
     ) {
         Page<DocumentDto> page = documentStorageService.listSelf(id, principal, pageable);
@@ -73,7 +73,7 @@ public class SelfServiceController {
     @PostMapping("/documents")
     public ResponseEntity<MessageAndDataResponse<DocumentDto>> uploadDocument(
             @PathVariable UUID id,
-            @AuthenticationPrincipal AppUserDetails principal,
+            @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "fileName") String fileName,
             @RequestParam(value = "expiryDate", required = false) LocalDate expiryDate
@@ -86,7 +86,7 @@ public class SelfServiceController {
     public ResponseEntity<DataResponse<DocumentDownloadDto>> downloadDocument(
             @PathVariable UUID id,
             @PathVariable UUID documentId,
-            @AuthenticationPrincipal AppUserDetails principal
+            @AuthenticationPrincipal AuthenticatedUser principal
     ) {
         DocumentDownloadDto download = documentStorageService.downloadSelf(id, documentId, principal);
         return ResponseEntity.ok(new DataResponse<>(download));
