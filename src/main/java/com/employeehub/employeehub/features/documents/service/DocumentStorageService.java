@@ -12,7 +12,7 @@ import com.employeehub.employeehub.features.roles.service.CompanyPermissionServi
 import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.BadRequestException;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
-import org.springframework.beans.factory.annotation.Value;
+import com.employeehub.employeehub.config.AppProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,15 +45,15 @@ public class DocumentStorageService {
     private final List<String> allowedContentTypes;
     private final CompanyPermissionService permissionService;
 
-    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, S3Properties s3Properties, @Value("${document.maxSizeBytes}") long maxSizeBytes, @Value("${document.allowedContentTypes}") List<String> allowedContentTypes, CompanyPermissionService permissionService) {
+    public DocumentStorageService(DocumentRepository documentRepository, CompanyMemberRepository companyMemberRepository, S3Client s3Client, S3Presigner s3Presigner, S3Properties s3Properties, AppProperties appProperties, CompanyPermissionService permissionService) {
         this.documentRepository = documentRepository;
         this.companyMemberRepository = companyMemberRepository;
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
         this.bucketName = s3Properties.bucket();
         this.presignExpireMinutes = s3Properties.presignExpireMinutes();
-        this.maxSizeBytes = maxSizeBytes;
-        this.allowedContentTypes = allowedContentTypes;
+        this.maxSizeBytes = appProperties.document().maxSizeBytes();
+        this.allowedContentTypes = appProperties.document().allowedContentTypes();
         this.permissionService = permissionService;
     }
 

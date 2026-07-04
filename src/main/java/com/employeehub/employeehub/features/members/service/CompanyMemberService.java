@@ -19,7 +19,7 @@ import com.employeehub.employeehub.security.model.AuthenticatedUser;
 import com.employeehub.employeehub.shared.exception.ConflictException;
 import com.employeehub.employeehub.shared.exception.ForbiddenException;
 import com.employeehub.employeehub.shared.exception.NotFoundException;
-import org.springframework.beans.factory.annotation.Value;
+import com.employeehub.employeehub.config.AppProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,7 @@ public class CompanyMemberService {
             CompanyPermissionService permissionService,
             CompanyRoleRepository companyRoleRepository,
             EmailEventPublisher emailEventPublisher,
-            @Value("${app.base-url}") String baseUrl
+            AppProperties appProperties
     ) {
         this.companyMemberRepository = companyMemberRepository;
         this.userRepository = userRepository;
@@ -61,7 +61,7 @@ public class CompanyMemberService {
         this.permissionService = permissionService;
         this.companyRoleRepository = companyRoleRepository;
         this.emailEventPublisher = emailEventPublisher;
-        this.baseUrl = baseUrl;
+        this.baseUrl = appProperties.baseUrl();
     }
 
     @Transactional

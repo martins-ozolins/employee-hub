@@ -48,6 +48,9 @@ app:
     issuer: ${TOKEN_ISSUER}
     accessCookieName: access_token
     refreshCookieName: refresh_token
+  document:
+    maxSizeBytes: ${DOCUMENT_MAX_SIZE:10485760}
+    allowedContentTypes: application/pdf,image/png,image/jpeg,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
 
 # AWS
 aws:
@@ -57,9 +60,4 @@ aws:
     accessKey: ${AWS_ACCESS_KEY_ID}
     secretKey: ${AWS_SECRET_ACCESS_KEY}
     presignExpireMinutes: ${S3_PRESIGN_EXPIRE_MINUTES:3}
-
-# DOCUMENT
-document:
-  maxSizeBytes: ${DOCUMENT_MAX_SIZE:10485760}
-  allowedContentTypes: application/pdf,image/png,image/jpeg,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
 

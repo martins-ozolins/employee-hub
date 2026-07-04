@@ -19,7 +19,7 @@ import com.employeehub.employeehub.shared.exception.EmailAlreadyUsedException;
 import com.employeehub.employeehub.shared.exception.EmailNotVerifiedException;
 import com.employeehub.employeehub.shared.exception.InvalidCredentialsException;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
+import com.employeehub.employeehub.config.AppProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,14 +39,14 @@ public class AuthService {
     private final EmailEventPublisher emailEventPublisher;
 
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, VerificationTokenService verificationTokenService, @Value("${app.baseUrl}") String baseUrl, EmailEventPublisher emailEventPublisher) {
+    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtService jwtService, CompanyMemberRepository companyMemberRepository, VerificationTokenService verificationTokenService, AppProperties appProperties, EmailEventPublisher emailEventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.companyMemberRepository = companyMemberRepository;
         this.verificationTokenService = verificationTokenService;
-        this.baseUrl = baseUrl;
+        this.baseUrl = appProperties.baseUrl();
         this.emailEventPublisher = emailEventPublisher;
     }
 

@@ -1,5 +1,6 @@
 package com.employeehub.employeehub;
 
+import com.employeehub.employeehub.config.AppProperties;
 import com.employeehub.employeehub.config.JwtProperties;
 import com.employeehub.employeehub.config.S3Properties;
 import org.springframework.boot.SpringApplication;
@@ -13,5 +14,6 @@ public class EmployeeHubApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(EmployeeHubApplication.class, args);
 	}
+
 
 }
