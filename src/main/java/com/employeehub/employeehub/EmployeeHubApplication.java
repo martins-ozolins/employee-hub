@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({JwtProperties.class, S3Properties.class})
+@EnableConfigurationProperties({AppProperties.class, JwtProperties.class, S3Properties.class})
 public class EmployeeHubApplication {
 
 	public static void main(String[] args) {
